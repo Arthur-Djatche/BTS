@@ -41,6 +41,8 @@ Route::get('/Admin', function () {
     return Inertia::render('Admin');
 })-> name('Admin');
 
+Route::post('/Admin', [ActeurController::class, 'handleRequest']);
+
 Route::get('/AjoutClient', function () {
     return Inertia::render('AjoutClient');
 });

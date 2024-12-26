@@ -58,7 +58,7 @@ function Admin() {
         </svg>
       </button>
       {/* Barre latérale */}
-      <div className={`fixed md:static z-50 top-0 left-0 w-64 bg-blue-600 text-white flex flex-col p-6 transform ${
+      <div className={`fixed md:static z-50 top-0 left-0 w-65 bg-blue-600 text-white flex flex-col p-6 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 transition-transform duration-200 ease-in-out`}>
         <h2 className="text-2xl font-bold mb-8">BNR CLEAN - Admin</h2>
