@@ -1,15 +1,8 @@
 import Layout from "@/Layouts/Layout";
 import { useForm } from '@inertiajs/react';
-import { useState } from "react";
-import ErrorPopup from "./ErrorPage";
+
 
 export default function Register() {
-
-    const [showError, setShowError] = useState(false);
-
-    const handleError = () => {
-        setShowError(true);
-    };
 
   
     const { data, setData, post, processing, errors } = useForm({
@@ -92,12 +85,6 @@ export default function Register() {
           onChange={(e) => setData('email', e.target.value)}
           />
           {errors.email && <div>{errors.email} </div>}
-          {showError && (
-                <ErrorPopup
-                    message="Une erreur s'est produite. Veuillez réessayer."
-                    onClose={() => setShowError(false)}
-                />
-            )}
         </div>
 
         {/* Champ pour le téléphone */}
@@ -149,7 +136,6 @@ export default function Register() {
 
         {/* Bouton de soumission */}
         <button
-        onClick={handleError}
           type="submit"
           disabled={processing}
           className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 transition duration-300"
