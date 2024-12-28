@@ -2,6 +2,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Acteur;
+use GuzzleHttp\Psr7\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
@@ -137,6 +138,24 @@ public function completeRegistration(Request $request)
 
     return response()->json(['message' => 'Inscription complétée avec succès.', 'acteur' => $acteur], 200);
 }
+
+public function index()
+{
+    $acteurs = Acteur::all();
+
+    return Inertia::render('Admin', [
+        'acteurs' => $acteurs,
+    ]);
+}
+
+public function destroy($id)
+{
+    $acteur = Acteur::findOrFail($id);
+    $acteur->delete();
+
+    return redirect()->route('Admin.list')->with('success', 'Acteur supprimé avec succès.');
+}
+
     
 
 }

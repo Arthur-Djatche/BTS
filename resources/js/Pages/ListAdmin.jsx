@@ -2,6 +2,7 @@ import Layout from "@/Layouts/Layout";
 import React, {useState} from "react";
 import AjoutActeur from "./AjoutActeur";
 import ListActeur from "./ListActeur";
+import { Link } from '@inertiajs/react';
 
 function Admin() {
   // État pour afficher ou masquer le menu sur mobile
@@ -24,16 +25,15 @@ function Admin() {
   const renderContent = () => {
     if (activeMenu === "employees") {
       if (activeSubMenu === "employees_list") {
-        return <ListActeur></ListActeur>;
+        return <ListActeur></ListActeur>
       } else if (activeSubMenu === "employees_add") {
         return <AjoutActeur></AjoutActeur>;
       }
     } else if (activeMenu === "suppliers") {
       return <p>Gestion des fournisseurs.</p>;
-    } else if (activeMenu === "acceuil") {
-      return <p>Bienvenue dans le tableau de bord de l'administrateur.</p>;
     }
 
+    return <p>Bienvenue dans le tableau de bord de l'administrateur.</p>;
   };
 
   return (
@@ -63,31 +63,12 @@ function Admin() {
       <div className={`fixed md:static z-50 top-0 left-0 w-65 bg-blue-600 text-white flex flex-col p-6 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 transition-transform duration-200 ease-in-out`}>
-        <h2 className="text-2xl font-bold mb-8">BNR CLEAN - Admin</h2> 
-
-        {/* Menu Gérer acceuil */}
-        <div className="mt-4">
-          <button
-            onClick={() => {
-              setActiveMenu("acceuil");
-              setActiveSubMenu(null); // Pas de sous-menu pour "Gérer fournisseur"
-              window.history.pushState({}, '', '/Admin/acceuil');
-            }}
-            className={`w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 focus:outline-none ${
-              activeMenu === "acceuil" ? "bg-blue-500" : ""
-            }`}
-          >
-            ACCEUIL
-          </button>
-        </div>
+        <h2 className="text-2xl font-bold mb-8">BNR CLEAN - Admin</h2>
 
         {/* Menu Gérer Employés */}
         <div>
           <button
-            onClick={() => {toggleSubMenu("employees");
-              window.history.pushState({}, '', '/Admin/Emp');
-            }
-          }
+            onClick={() => toggleSubMenu("employees")}
             className="w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 focus:outline-none"
           >
             Gérer employés
@@ -96,29 +77,24 @@ function Admin() {
           {/* Sous-menus pour Gérer Employés */}
           {activeMenu === "employees" && (
             <div className="ml-4 mt-2">
+              <Link href="/Admin/ListActeur">
               <button
                 onClick={() => {setActiveSubMenu("employees_list")
                                 setSidebarOpen(false);
-
-                                window.history.pushState({}, '', '/Admin/Emp/list');
-
-                                // Inertia.replace('/Admin/list');
-                }
-              
-              }
+                }}
                 className={`block w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 ${
                   activeSubMenu === "employees_list" ? "bg-blue-500" : ""
                   
                 }`
               }
+
               >
                 Liste
               </button>
+              </Link>
               <button
                 onClick={() => {setActiveSubMenu("employees_add")
                                 setSidebarOpen(false);
-
-                                window.history.pushState({}, '', '/Admin/Emp/Ajout');
                 }}
                 className={`block w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 ${
                   activeSubMenu === "employees_add" ? "bg-blue-500" : ""
@@ -136,8 +112,6 @@ function Admin() {
             onClick={() => {
               setActiveMenu("suppliers");
               setActiveSubMenu(null); // Pas de sous-menu pour "Gérer fournisseur"
-              window.history.pushState({}, '', '/Admin/fournisseur');
-              
             }}
             className={`w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 focus:outline-none ${
               activeMenu === "suppliers" ? "bg-blue-500" : ""

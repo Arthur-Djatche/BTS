@@ -43,6 +43,29 @@ Route::get('/Admin', function () {
 
 Route::post('/Admin', [ActeurController::class, 'handleRequest']);
 
+
+Route::get('/Admin/Emp/list', [ActeurController::class, 'index'])->name('admin.list');
+
+// Route::get('/Admin/Emp/list', function () {
+//     return Inertia::render('Admin');
+// })-> name('AdminListEmp');
+
+Route::delete('/Admin/Emp/list{id}', [ActeurController::class, 'destroy']);
+
+Route::get('/Admin/Emp/Ajout', function () {
+    return Inertia::render('Admin');
+})-> name('AdminEmp');
+
+Route::get('/Admin/Emp', function () {
+    return Inertia::render('Admin');
+});
+
+Route::get('/Admin/acceuil', function () {
+    return Inertia::render('Admin'); });
+
+Route::get('/Admin/fournisseur', function () {
+    return Inertia::render('Admin'); });
+
 Route::get('/AjoutClient', function () {
     return Inertia::render('AjoutClient');
 });

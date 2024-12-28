@@ -1,41 +1,35 @@
-import React from 'react';
-import {useState} from "react";
-import { useEffect } from 'react';
+import React from "react";
 import { FaEdit, FaTrash } from "react-icons/fa";
+import { usePage } from "@inertiajs/react";
+import { Inertia } from "@inertiajs/inertia";
 
-function ListActeur () {
-    // Exemple de données initiales pour les acteurs
-  const [acteurs, setActeurs] = useState([
-    {
-      id: 1,
-      nom: "Doe",
-      prenom: "John",
-      email: "john.doe@example.com",
-      telephone: "+123456789",
-      role: "admin",
-    },
-    {
-      id: 2,
-      nom: "Smith",
-      prenom: "Jane",
-      email: "jane.smith@example.com",
-      telephone: "+987654321",
-      role: "manager",
-    },
-  ]);
-
+function ListActeur() {
+  const { acteurs } = usePage().props; // Récupérer les acteurs depuis les props d'Inertia
+    console.log("Données reçues :", acteurs);
   // Fonction pour supprimer un acteur
   const handleDelete = (id) => {
     const confirmDelete = window.confirm("Voulez-vous vraiment supprimer cet acteur ?");
     if (confirmDelete) {
-      setActeurs(acteurs.filter((acteur) => acteur.id !== id));
+      Inertia.delete(`/Admin/Emp/list/${id}`, {
+        onSuccess: () => {
+          alert("Acteur supprimé avec succès !");
+        },
+        onError: (errors) => {
+          console.error("Erreur :", errors);
+        },
+      });
     }
   };
 
-  // Fonction pour modifier un acteur (exemple avec un simple alert)
   const handleEdit = (id) => {
     alert(`Modifier l'acteur avec l'ID : ${id}`);
   };
+
+  
+
+  if (!acteurs || acteurs.length === 0) {
+    return <p className="text-center mt-6">Aucun acteur trouvé.</p>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6">
@@ -61,7 +55,6 @@ function ListActeur () {
                 <td className="border px-4 py-2">{acteur.telephone}</td>
                 <td className="border px-4 py-2">{acteur.role}</td>
                 <td className="border px-4 py-2 text-center space-x-2">
-                  {/* Bouton Modifier */}
                   <button
                     onClick={() => handleEdit(acteur.id)}
                     className="text-blue-600 hover:text-blue-800"
@@ -69,7 +62,6 @@ function ListActeur () {
                   >
                     <FaEdit />
                   </button>
-                  {/* Bouton Supprimer */}
                   <button
                     onClick={() => handleDelete(acteur.id)}
                     className="text-red-600 hover:text-red-800"
@@ -85,7 +77,6 @@ function ListActeur () {
       </div>
     </div>
   );
-
-};
+}
 
 export default ListActeur;
