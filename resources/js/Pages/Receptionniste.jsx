@@ -1,48 +1,43 @@
 import Layout from "@/Layouts/Layout";
 import React, {useState} from "react";
+import AjoutActeur from "./AjoutActeur";
+import AjoutClient from "./AjoutClient";
 
+function Admin() {
+  // État pour afficher ou masquer le menu sur mobile
+  const [isSidebarOpen, setSidebarOpen] = useState(false);
+  const [activeMenu, setActiveMenu] = useState(null);
+  const [activeSubMenu, setActiveSubMenu] = useState(null);
 
+  // Fonction pour gérer l'ouverture/fermeture des sous-menus
+  const toggleSubMenu = (menu) => {
+    if (activeMenu === menu) {
+      setActiveMenu(null);
+      setActiveSubMenu(null); // Réinitialiser le sous-menu si le menu principal est fermé
+    } else {
+      setActiveMenu(menu);
+      setActiveSubMenu(null); // Réinitialiser le sous-menu
+    }
+  };
 
-function Receptionniste() {
+  // Rendu du contenu principal en fonction du menu et sous-menu sélectionnés
+  const renderContent = () => {
+    if (activeMenu === "employees") {
+      if (activeSubMenu === "employees_list") {
+        return <AjoutClient> </AjoutClient>;
+      } else if (activeSubMenu === "employees_add") {
+        return <p>lavage</p> ;
+      }
+    } else if (activeMenu === "suppliers") {
+      return <p>Gestion des fournisseurs.</p>;
+    } else if (activeMenu === "acceuil") {
+      return <p>Bienvenue dans le tableau de bord de l'administrateur.</p>;
+    }
 
-// État pour suivre le menu actif
-const [activeMenu, setActiveMenu] = useState("Enregistrer vêtements");
-// État pour afficher ou masquer le menu sur mobile
-const [isSidebarOpen, setSidebarOpen] = useState(false);
+  };
 
-const [activeSubMenu, setActiveSubMenu] = useState(null);
-
- // Fonction pour gérer l'ouverture/fermeture des sous-menus
- const toggleSubMenu = (menu) => {
-  if (activeMenu === menu) {
-    setActiveMenu(null);
-  } else {
-    setActiveMenu(menu);
-  }
-};
-
-// Contenu pour chaque menu
-const renderContent = () => {
-    switch (activeMenu) {
-      case "Enregistrer vêtements":
-        return (
-          <>
-            {activeSubMenu === "Ajouter" && <p>Formulaire pour ajouter un vêtement.</p>}
-            {activeSubMenu === "Liste" && <p>Liste des vêtements enregistrés.</p>}
-          </>
-        );
-      case "Effectuer retrait":
-        return <p>Page pour effectuer le retrait des vêtements.</p>;
-      case "État de lavage":
-        return <p>Page pour voir l'état de lavage des vêtements.</p>;
-      default:
-        return null;
-  }
-};
-
-    return (
-        <>
-             <div className="flex min-h-screen bg-gray-100">
+  return (
+    <div className="flex min-h-screen">
       {/* Menu burger pour mobile */}
       <button
         className="md:hidden p-4 text-blue-600"
@@ -64,90 +59,107 @@ const renderContent = () => {
           />
         </svg>
       </button>
-
       {/* Barre latérale */}
-      <div
-        className={`fixed md:static z-50 top-0 left-0 w-64 bg-blue-600 text-white flex flex-col p-6 transform ${
+      <div className={`fixed md:static z-50 top-0 left-0 w-65 bg-blue-600 text-white flex flex-col p-6 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 transition-transform duration-200 ease-in-out`}
-      >
-        
-        
-        {/* Menus de navigation */}
+        } md:translate-x-0 transition-transform duration-200 ease-in-out`}>
+        <h2 className="text-2xl font-bold mb-8">BNR CLEAN - Admin</h2> 
+
+        {/* Menu Gérer acceuil */}
+        <div className="mt-4">
+          <button
+            onClick={() => {
+              setActiveMenu("acceuil");
+              setActiveSubMenu(null); // Pas de sous-menu pour "Gérer fournisseur"
+              window.history.pushState({}, '', '/Admin/acceuil');
+            }}
+            className={`w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 focus:outline-none ${
+              activeMenu === "acceuil" ? "bg-blue-500" : ""
+            }`}
+          >
+            ACCEUIL
+          </button>
+        </div>
+
         {/* Menu Gérer Employés */}
-      <div>
-        <button
-          onClick={() => toggleSubMenu("employees")}
-          className="w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 focus:outline-none"
-        >
-          Gérer employés
-        </button>
-        
-        {/* Sous-menus pour Gérer Employés */}
-        {activeMenu === "employees" && (
-          <div className="ml-4 mt-2">
-            <button
-              onClick={() => setActiveSubMenu("employees_list")}
-              className={`block w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 ${
-                activeSubMenu === "employees_list" ? "bg-blue-500" : ""
-              }`}
-            >
-              Liste
-            </button>
-            <button
-              onClick={() => setActiveSubMenu("employees_add")}
-              className={`block w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 ${
-                activeSubMenu === "employees_add" ? "bg-blue-500" : ""
-              }`}
-            >
-              Ajouter
-            </button>
-          </div>
-        )}
-      </div>
+        <div>
+          <button
+            onClick={() => {toggleSubMenu("employees");
+              window.history.pushState({}, '', '/Admin/Emp');
+            }
+          }
+            className="w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 focus:outline-none"
+          >
+            Lavage
+          </button>
 
+          {/* Sous-menus pour Gérer Employés */}
+          {activeMenu === "employees" && (
+            <div className="ml-4 mt-2">
+              <button
+                onClick={() => {setActiveSubMenu("employees_list")
+                                setSidebarOpen(false);
 
-        <button
-          className={`text-left py-2 px-4 rounded-md mb-2 ${activeMenu === "Enregistrer vêtements" ? "bg-blue-500" : ""}`}
-          onClick={() => {
-            setActiveMenu("Enregistrer vêtements");
-            setSidebarOpen(false);
-          }}
-        >
-          Enregistrer vêtements
-        </button>
-        <button
-          className={`text-left py-2 px-4 rounded-md mb-2 ${activeMenu === "Effectuer retrait" ? "bg-blue-500" : ""}`}
-          onClick={() => {
-            setActiveMenu("Effectuer retrait");
-            setSidebarOpen(false);
-          }}
-        >
-          Effectuer retrait
-        </button>
-        <button
-          className={`text-left py-2 px-4 rounded-md ${activeMenu === "État de lavage" ? "bg-blue-500" : ""}`}
-          onClick={() => {
-            setActiveMenu("État de lavage");
-            setSidebarOpen(false);
-          }}
-        >
-          État de lavage
-        </button>
+                                window.history.pushState({}, '', '/Admin/Emp/list');
+
+                                // Inertia.replace('/Admin/list');
+                }
+              
+              }
+                className={`block w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 ${
+                  activeSubMenu === "employees_list" ? "bg-blue-500" : ""
+                  
+                }`
+              }
+              >
+                Nouveau Lavage
+              </button>
+              <button
+                onClick={() => {setActiveSubMenu("employees_add")
+                                setSidebarOpen(false);
+
+                                window.history.pushState({}, '', '/Admin/Emp/Ajout');
+                }}
+                className={`block w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 ${
+                  activeSubMenu === "employees_add" ? "bg-blue-500" : ""
+                }`}
+              >
+                imprimer étiquettes
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Menu Gérer Fournisseur */}
+        <div className="mt-4">
+          <button
+            onClick={() => {
+              setActiveMenu("suppliers");
+              setActiveSubMenu(null); // Pas de sous-menu pour "Gérer fournisseur"
+              window.history.pushState({}, '', '/Admin/fournisseur');
+              
+            }}
+            className={`w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 focus:outline-none ${
+              activeMenu === "suppliers" ? "bg-blue-500" : ""
+            }`}
+          >
+            Gérer fournisseur
+          </button>
+        </div>
       </div>
 
       {/* Contenu principal */}
-      <div className="flex-1 p-8 ml-0 md:ml-64">
-        <h2 className="text-2xl font-bold mb-4">{activeMenu}</h2>
-        <div className="bg-white p-6 rounded-md shadow-md">
+      <div className="flex-1 p-6">
+        <h2 className="text-xl font-bold mb-4">Contenu</h2>
+        <div className="bg-white p-4 rounded-md shadow-md">
           {renderContent()}
         </div>
       </div>
     </div>
-        </>
-    );
-}
+  );
+};
 
-Receptionniste.layout = page => <Layout children={page}/>
- 
-export default Receptionniste;
+Admin.layout = page => <Layout children={page}/>
+
+
+export default Admin;

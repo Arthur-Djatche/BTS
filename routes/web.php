@@ -25,8 +25,8 @@ Route::get('/Laveur', function () {
 });
 
 Route::get('/Receptionniste', function () {
-    return Inertia::render('Receptionniste');
-});
+    return Inertia::render('NouveauLavage');
+})->name('Receptionniste');
 
 Route::get('/Inscription', function () {
     return Inertia::render('Register');
@@ -44,13 +44,13 @@ Route::get('/Admin', function () {
 Route::post('/Admin', [ActeurController::class, 'handleRequest']);
 
 
-Route::get('/Admin/Emp/list', [ActeurController::class, 'index'])->name('admin.list');
+Route::get('/Admin/Emp/list', [ActeurController::class, 'index', 'indexx'])->name('admin.list');
 
 // Route::get('/Admin/Emp/list', function () {
 //     return Inertia::render('Admin');
 // })-> name('AdminListEmp');
 
-Route::delete('/Admin/Emp/list{id}', [ActeurController::class, 'destroy']);
+Route::delete('/Admin/Emp/list/{id}', [ActeurController::class, 'destroy']);
 
 Route::get('/Admin/Emp/Ajout', function () {
     return Inertia::render('Admin');
@@ -68,4 +68,20 @@ Route::get('/Admin/fournisseur', function () {
 
 Route::get('/AjoutClient', function () {
     return Inertia::render('AjoutClient');
+});
+
+Route::get('/receptionniste/nouveau-lavage', function(){
+    return Inertia::render('NouveauLavage');
+});
+
+Route::post('/receptionniste/nouveau-lavage', function(){
+    return Inertia::render('NouveauLavage');
+});
+
+Route::get('/receptionniste/etat-lavage', function(){
+    return Inertia::render('EtatLavage');
+});
+
+Route::get('/receptionniste/acceuil', function(){
+    return Inertia::render('DashboardReceptionniste');
 });

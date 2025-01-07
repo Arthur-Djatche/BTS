@@ -148,12 +148,26 @@ public function index()
     ]);
 }
 
+public function indexx(Request $request)
+{
+    $search = $request->input('search');
+    $acteurs = Acteur::query()
+        ->when($search, fn($query) => 
+            $query->where('nom', 'like', "%{$search}%")
+                  ->orWhere('prenom', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%"))
+        ->get();
+
+    return inertia('Admin/Emp/ListActeur', ['acteurs' => $acteurs]);
+}
+
+
 public function destroy($id)
 {
     $acteur = Acteur::findOrFail($id);
     $acteur->delete();
 
-    return redirect()->route('Admin.list')->with('success', 'Acteur supprimé avec succès.');
+    // return redirect()->back()->with('success', 'Acteur supprimé avec succès.');
 }
 
     
