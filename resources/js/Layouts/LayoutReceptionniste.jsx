@@ -25,6 +25,7 @@ function LayoutReceptionniste({ children }) {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
         </svg>
       </button>
+      
       {/* Menu latéral */}
       <aside className={`fixed md:static z-50 top-0 left-0 w-80 bg-blue-600 text-white flex flex-col p-6 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -72,6 +73,7 @@ function LayoutReceptionniste({ children }) {
           </Link>
         </nav>
       </aside>
+    
 
       {/* Zone de contenu principal */}
       <main className="flex-1 p-6 bg-gray-50">

@@ -7,7 +7,7 @@ use Inertia\Inertia;
 
 use App\Http\Controllers\ActeurController;
 use App\Http\Controllers\AuthController;
-
+use App\Http\Controllers\NouveauLavage;
 
 Route::get('/', function () {
     return Inertia::render('Login');
@@ -25,7 +25,7 @@ Route::get('/Laveur', function () {
 });
 
 Route::get('/Receptionniste', function () {
-    return Inertia::render('NouveauLavage');
+    return Inertia::render('DashboardReceptionniste');
 })->name('Receptionniste');
 
 Route::get('/Inscription', function () {
@@ -70,13 +70,20 @@ Route::get('/AjoutClient', function () {
     return Inertia::render('AjoutClient');
 });
 
-Route::get('/receptionniste/nouveau-lavage', function(){
-    return Inertia::render('NouveauLavage');
+// Route::get('/receptionniste/nouveau-lavage', function(){
+//     return Inertia::render('NouveauLavage');
+// });
+
+// Route::get('/receptionniste/nouveau-lavage',[NouveauLavage::class, 'create']);
+
+Route::get('receptionniste/nouveau-lavage', function () {
+    return Inertia::render('NouveauLavage', [
+        'clients' => \App\Models\Client::all(),
+        'categories' => \App\Models\Categorie::all(),
+        'types' => \App\Models\Type::all(),
+    ]);
 });
 
-Route::post('/receptionniste/nouveau-lavage', function(){
-    return Inertia::render('NouveauLavage');
-});
 
 Route::get('/receptionniste/etat-lavage', function(){
     return Inertia::render('EtatLavage');
