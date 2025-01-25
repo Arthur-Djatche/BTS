@@ -8,7 +8,7 @@ class Vetement extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['categorie_id', 'type_id', 'lavage_id', 'client_id', 'couleur'];
+    protected $fillable = ['categorie_id', 'type_id', 'lavage_id', 'client_id', 'couleur','etat',];
 
     public function categorie()
     {

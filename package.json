@@ -23,6 +23,7 @@
     "dependencies": {
         "@inertiajs/inertia": "^0.11.1",
         "@inertiajs/inertia-react": "^0.8.1",
+        "react-barcode": "^1.5.3",
         "react-icons": "^5.4.0"
     }
 }

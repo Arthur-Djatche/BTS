@@ -4,6 +4,7 @@ import { Link } from "@inertiajs/inertia-react";
 import { usePage } from "@inertiajs/react";
 import Layout from "@/Layouts/Layout";
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
+import Barcode from "react-barcode";
 
 const NouveauLavage = () => {
   const [nomClient, setNomClient] = useState("");
@@ -11,6 +12,44 @@ const NouveauLavage = () => {
   const [vetements, setVetements] = useState([{ categorie_id: "", type_id: "", couleur: "#000000" }]);
   const [facture, setFacture] = useState(null); // Facture pour la deuxième étape
   const { clients, categories, types } = usePage().props;
+  const [isDropdownVisible, setDropdownVisible] = useState(false);
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [filteredClients, setFilteredClients] = useState([]); // Liste filtrée des clients
+  
+
+
+  const handleClientSelect = (client) => {
+    setNomClient(client.nom); // Affiche le nom sélectionné dans le champ
+    setSelectedClient(client); // Stocke l'objet complet du client sélectionné
+    setDropdownVisible(false); // Masque la liste déroulante
+  };
+  
+  
+
+  const handleClientChange = (e) => {
+    const input = e.target.value;
+    setNomClient(input);
+  
+    // Filtrer les clients correspondants
+    const matches = clients.filter((client) =>
+      client.nom.toLowerCase().includes(input.toLowerCase())
+    );
+
+    setFilteredClients(matches); // Met à jour la liste déroulante
+    setDropdownVisible(true); // Affiche la liste déroulante
+  };
+  
+  
+
+
+   // État pour la fenêtre modale d'ajout de client
+   const [showModal, setShowModal] = useState(false);
+   const [newClient, setNewClient] = useState({
+     nom: "",
+     prenom: "",
+     email: "",
+     telephone: "",
+   });
 
   useEffect(() => {
     const difference = nombreVetements - vetements.length;
@@ -31,87 +70,55 @@ const NouveauLavage = () => {
     setVetements(updatedVetements);
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Générer une facture temporaire pour l'étape suivante
-    const numeroLavage = Date.now(); // Exemple de numéro unique basé sur l'heure
-    const factureTemp = {
-      client: nomClient,
-      vetements: vetements.map((v, index) => ({
-        ...v,
-        numero: `${numeroLavage}-${index + 1}`,
-        codeBarre: `${numeroLavage}${index + 1}`, // Exemple de code-barres
-      })),
+  // const handleSubmit = (e) => {
+  //   e.preventDefault();
+  //   // Générer une facture temporaire pour l'étape suivante
+  //   const numeroLavage = Date.now(); // Exemple de numéro unique basé sur l'heure
+  //   const factureTemp = {
+  //     client: nomClient,
+  //   };
+  // };
+
+  const handleSave = (onSuccessCallback) => {
+    if (!selectedClient) {
+      alert("Veuillez sélectionner un client.");
+      return;
+    }
+  
+    const data = {
+      client_id: selectedClient.id, // ID du client sélectionné
+      vetements: vetements, // Liste des vêtements récupérés
     };
-    setFacture(factureTemp); // Passer à l'étape de la facture
-  };
-
-  const handlePrintAndSave = () => {
+  
+    console.log("Données envoyées :", data);
+  
     // Insérer les données dans la base de données
-    Inertia.post("/lavages", {
-      client: facture.client,
-      vetements: facture.vetements,
+    Inertia.post("/receptionniste/nouveau-lavage", data, {
+      onSuccess: () => {
+        alert("Lavage enregistré avec succès !");
+        if (onSuccessCallback) {
+          onSuccessCallback(); // Exécute la redirection ou toute autre action
+        }
+      },
+      onError: (errors) => {
+        console.error(errors);
+        alert("Une erreur s'est produite lors de l'enregistrement.");
+      },
     });
+  };
+  
+  
 
-    // Imprimer la facture
-    window.print();
+  const handleAddClient = (e) => {
+    e.preventDefault();
+    Inertia.post("/clients", newClient, {
+      onSuccess: () => {
+        setShowModal(false); // Fermer la fenêtre après succès
+        setNewClient({ nom: "", prenom: "", email: "", telephone: "" }); // Réinitialiser le formulaire
+      },
+    });
   };
 
-  if (facture) {
-    // Étape 2 : Affichage de la facture
-    return (
-      <LayoutReceptionniste>
-        <div className="p-6 bg-white rounded-lg shadow-md">
-          <h1 className="text-2xl font-bold text-blue-600 mb-4">Facture</h1>
-          <p className="text-blue-500">Client : {facture.client}</p>
-          <table className="w-full text-left border-collapse border border-blue-300 mt-4">
-            <thead>
-              <tr>
-                <th className="border border-blue-300 px-4 py-2">Numéro</th>
-                <th className="border border-blue-300 px-4 py-2">Catégorie</th>
-                <th className="border border-blue-300 px-4 py-2">Type</th>
-                <th className="border border-blue-300 px-4 py-2">Couleur</th>
-                <th className="border border-blue-300 px-4 py-2">Code-barres</th>
-              </tr>
-            </thead>
-            <tbody>
-              {facture.vetements.map((vetement, index) => (
-                <tr key={index}>
-                  <td className="border border-blue-300 px-4 py-2">{vetement.numero}</td>
-                  <td className="border border-blue-300 px-4 py-2">
-                    {categories.find((c) => c.id === vetement.categorie_id)?.nom || "N/A"}
-                  </td>
-                  <td className="border border-blue-300 px-4 py-2">
-                    {types.find((t) => t.id === vetement.type_id)?.nom || "N/A"}
-                  </td>
-                  <td className="border border-blue-300 px-4 py-2">
-                    <div
-                      className="w-6 h-6 rounded-full"
-                      style={{ backgroundColor: vetement.couleur }}
-                    ></div>
-                  </td>
-                  <td className="border border-blue-300 px-4 py-2">
-                    <img
-                      src={`https://barcode.tec-it.com/barcode.ashx?data=${vetement.codeBarre}&code=Code128`}
-                      alt={`Code-barres ${vetement.codeBarre}`}
-                      className="w-32"
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <button
-            onClick={handlePrintAndSave}
-            className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
-          >
-            Imprimer et Enregistrer
-          </button>
-        </div>
-      </LayoutReceptionniste>
-    );
-  }
 
   // Étape 1 : Formulaire de lavage
   return (
@@ -119,31 +126,46 @@ const NouveauLavage = () => {
       
         <div className="p-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-blue-600 mb-4">Nouveau Lavage</h1>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form className="space-y-4">
           {/* Zone de recherche du client */}
-          <div className="flex items-center gap-4">
-            <div className="flex-grow">
-              <label className="block text-blue-600 font-medium mb-1">Nom du client</label>
-              <input
-                type="text"
-                className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={nomClient}
-                onChange={(e) => setNomClient(e.target.value)}
-                list="clients"
-                placeholder="Rechercher un client..."
-              />
-              <datalist id="clients">
-                {clients.map((client) => (
-                  <option key={client.id} value={client.nom} />
-                ))}
-              </datalist>
-            </div>
-            <Link
-              href="/clients/create"
+<div className="flex items-center gap-4">
+<div className="flex-grow">
+  <label className="block text-blue-600 font-medium mb-1">Nom du client</label>
+  <input
+    type="text"
+    className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+    value={nomClient}
+    onChange={(e) => handleClientChange(e)} // Appel à handleClientChange lors de la saisie
+    onBlur={() => setTimeout(() => setDropdownVisible(false), 200)} // Masque la liste avec un délai
+    onFocus={() => setDropdownVisible(true)} // Affiche la liste déroulante lorsque le champ est activé
+    placeholder="Rechercher un client..."
+  />
+  {isDropdownVisible && nomClient && (
+    <ul className="bg-white border border-blue-300 rounded mt-1 max-h-40 overflow-y-auto">
+      {clients
+        .filter((client) =>
+          client.nom.toLowerCase().includes(nomClient.toLowerCase())
+        )
+        .map((filteredClient) => (
+          <li
+            key={filteredClient.id}
+            className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
+            onClick={() => handleClientSelect(filteredClient)} // Appel à handleClientSelect lors de la sélection
+          >
+            {filteredClient.nom} <br /> {filteredClient.email}
+          </li>
+        ))}
+    </ul>
+  )}
+</div>
+
+            <button
+              type="button"
+              onClick={() => setShowModal(true)}
               className="mt-7 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:ring-2 focus:ring-blue-300"
             >
               Ajouter Client
-            </Link>
+            </button>
           </div>
 
           {/* Nombre de vêtements */}
@@ -183,21 +205,20 @@ const NouveauLavage = () => {
               {/* Type */}
               <div>
                 <label className="block text-blue-600 font-medium mb-1">Type</label>
-                <input
+                <select
                   type="text"
                   className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={vetement.type_id}
                   onChange={(e) => handleVetementChange(index, "type_id", e.target.value)}
-                  list="types"
-                  placeholder="Rechercher un type..."
-                />
-                <datalist id="types">
+                 
+                >
+                <option value="">-- Sélectionner --</option>
                   {types.map((type) => (
                     <option key={type.id} value={type.id}>
                       {type.nom}
                     </option>
                   ))}
-                </datalist>
+                </select>
               </div>
 
               {/* Couleur */}
@@ -214,16 +235,101 @@ const NouveauLavage = () => {
               </div>
             </div>
           ))}
-
+<Link href="/receptionniste/facture">
           {/* Bouton Suivant */}
-          <button
-            type="submit"
+          <button   onClick={() => {
+    handleSave(() => {
+      // Rediriger après le succès de handleSave
+      Inertia.visit("/receptionniste/facture");
+    });
+  }}
+ 
             className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
+            
           >
             Suivant
-          </button>
+          </button> 
+          </Link>
         </form>
       </div>
+
+       {/* Fenêtre contextuelle */}
+       {showModal && (
+  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-xl font-semibold text-blue-600 mb-4">Ajouter un Client</h2>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault(); // Empêche le rechargement de la page
+          Inertia.post("/clients", newClient, {
+            onSuccess: () => {
+              setShowModal(false); // Fermer la fenêtre si la requête est réussie
+              setNewClient({ nom: "", prenom: "", email: "", telephone: "" }); // Réinitialiser le formulaire
+            },
+            onError: (errors) => {
+              console.error(errors); // Affiche les erreurs éventuelles dans la console
+            },
+          });
+        }}
+        className="space-y-4"
+      >
+        {/* Champ Nom */}
+        <input
+          type="text"
+          placeholder="Nom"
+          value={newClient.nom}
+          onChange={(e) => setNewClient({ ...newClient, nom: e.target.value })}
+          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        {/* Champ Prénom */}
+        <input
+          type="text"
+          placeholder="Prénom"
+          value={newClient.prenom}
+          onChange={(e) => setNewClient({ ...newClient, prenom: e.target.value })}
+          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        {/* Champ Email */}
+        <input
+          type="email"
+          placeholder="Email"
+          value={newClient.email}
+          onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        {/* Champ Téléphone */}
+        <input
+          type="tel"
+          placeholder="Téléphone"
+          value={newClient.telephone}
+          onChange={(e) => setNewClient({ ...newClient, telephone: e.target.value })}
+          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          required
+        />
+        {/* Boutons Valider et Annuler */}
+        <div className="flex items-center justify-end gap-4">
+          <button
+            type="button"
+            onClick={() => setShowModal(false)}
+            className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
+          >
+            Valider
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
     </LayoutReceptionniste>
   );
 };

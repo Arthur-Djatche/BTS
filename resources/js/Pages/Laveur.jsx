@@ -1,10 +1,11 @@
 import Layout from "@/Layouts/Layout";
+import LayoutLaveur from "@/Layouts/LayoutLaveur";
 function Laveur() {
     return (
-        <>
+        <LayoutLaveur>
             <h1> Laveur
              </h1>
-        </>
+        </LayoutLaveur>
     );
 }
 

@@ -59,9 +59,15 @@ class AuthController extends Controller
     /**
      * Déconnexion de l'utilisateur.
      */
-    public function logout()
+    public function logout(Request $request)
     {
+        // Déconnecte l'utilisateur
         Auth::logout();
-        return redirect()->route('/');
+
+        // Invalide la session et redirige vers la page de connexion
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect('/'); // Redirige vers la page de connexion
     }
 }
