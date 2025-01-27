@@ -10,4 +10,12 @@ export default defineConfig({
         }),
         react(),
     ],
+
+    build: {
+        rollupOptions: {
+            input: {
+                'react-email': './resources/js/Pages/mail/VetementsPrets.jsx',
+            },
+        },
+    },
 });

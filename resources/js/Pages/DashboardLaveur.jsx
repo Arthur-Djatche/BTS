@@ -1,10 +1,10 @@
 import React from "react";
-import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
+import LayoutLaveur from "@/Layouts/LayoutLaveur";
 import Layout from "@/Layouts/Layout";
 
-function DashboardReceptionniste() {
+function DashboardLaveur() {
   return (
-    <LayoutReceptionniste>
+    <LayoutLaveur>
       
       {/* Titre principal de la page */}
       <h1 className="text-2xl font-bold text-blue-600">Dashboard Réceptionniste</h1>
@@ -39,25 +39,19 @@ function DashboardReceptionniste() {
         <div className="mt-4 flex flex-wrap gap-4">
           {/* Bouton "Nouveau Lavage" */}
           <a
-            href="/receptionniste/nouveau-lavage"
+            href="/Laveur/Taches"
             className="px-6 py-3 bg-blue-600 text-white font-semibold rounded shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            Nouveau Lavage
+            Liste des taches
           </a>
 
-          {/* Bouton "État Lavage" */}
-          <a
-            href="/receptionniste/etat-lavage"
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            État Lavage
-          </a>
+        
         </div>
       </div>
-    </LayoutReceptionniste>
+    </LayoutLaveur>
   );
 }
 
-DashboardReceptionniste.layout = (page) => <Layout children={page}/>
+DashboardLaveur.layout = (page) => <Layout children={page}/>
 
-export default DashboardReceptionniste;
+export default DashboardLaveur;

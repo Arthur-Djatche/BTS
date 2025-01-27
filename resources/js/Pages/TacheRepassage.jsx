@@ -1,148 +1,78 @@
-import React, { useState, useEffect } from "react";
-import { FaEdit, FaTrash, FaSync } from "react-icons/fa";
-import { usePage } from "@inertiajs/react";
-import { Inertia } from "@inertiajs/inertia";
+import React, { useState } from "react";
+import { usePage } from "@inertiajs/react"; // Pour récupérer les données injectées depuis Laravel
+import { Inertia } from "@inertiajs/inertia"; // Pour gérer les requêtes via Inertia
+import LayoutRepasseur from "@/Layouts/LayoutRepasseur"; // Layout personnalisé pour les Laveur
+import Layout from "@/Layouts/Layout";
 
-function ListActeur() {
-  const { acteurs } = usePage().props; // Récupérer les acteurs depuis les props d'Inertia
-  const [localActeurs, setLocalActeurs] = useState(acteurs || []); // État local
-  const [searchTerm, setSearchTerm] = useState(""); // État pour la barre de recherche
-  const [isRefreshing, setIsRefreshing] = useState(false); // État pour l'icône de rafraîchissement
+const TacheRepassage = () => {
+  // Récupérer les données injectées via Inertia
+  const { vetements } = usePage().props;
 
-
-  // Fonction pour recharger les données périodiquement avec Inertia
-  useEffect(() => {
-    const interval = setInterval(() => {
-      refreshData();
-    }, 500000); // Recharger toutes les 5 secondes
-
-    return () => clearInterval(interval); // Nettoyer l'intervalle lors du démontage
-  }, []);
-
-  // Fonction pour recharger les données
-  const refreshData = () => {
-    setIsRefreshing(true); // Afficher l'état de rafraîchissement
-    Inertia.reload({
-      only: ["acteurs"],
-      preserveState: true,
-      preserveScroll: true,
-      onSuccess: (page) => {
-        setLocalActeurs(page.props.acteurs);
-        setIsRefreshing(false); // Réinitialiser l'état de rafraîchissement
+  // Fonction pour mettre à jour l’état d’un vêtement
+  const handleMarkAsFinished = (vetementId) => {
+    // Envoyer une requête pour mettre à jour l’état du vêtement
+    Inertia.patch(`/vetements/${vetementId}/update-etat`, { etat: "Terminé" }, {
+      onSuccess: () => {
+        alert("Vêtement mis à jour avec succès !");
       },
-      onError: () => {
-        setIsRefreshing(false);
+      onError: (errors) => {
+        console.error(errors);
+        alert("Une erreur s'est produite lors de la mise à jour.");
       },
     });
   };
 
-  // Fonction pour rechercher les acteurs
-  const handleSearch = (event) => {
-    event.preventDefault();
-    Inertia.get("/Admin", { search: searchTerm }, {
-      only: ["acteurs"],
-      preserveState: true,
-      preserveScroll: true,
-      onSuccess: (page) => {
-        setLocalActeurs(page.props.acteurs);
-      },
-    });
-  };
-
-  // Fonction pour supprimer un acteur
-  const handleDelete = (id) => {
-    const confirmDelete = window.confirm("Voulez-vous vraiment supprimer cet acteur ?");
-    if (confirmDelete) {
-      Inertia.delete(`/Admin/Emp/list/${id}`, {
-        onSuccess: () => {
-          alert("Acteur supprimé avec succès !");
-          refreshData();
-        },
-      });
-    }
-  };
-
-  const handleEdit = (id) => {
-    alert(`Modifier l'acteur avec l'ID : ${id}`);
-  };
-
-  if (!localActeurs || localActeurs.length === 0) {
-    return <p className="text-center mt-6">Aucun acteur trouvé.</p>;
-  }
+  // Filtrer les vêtements qui sont "En lavage"
+  const vetementsEnRepassage = vetements.filter((vetement) => vetement.etat === "En repassage");
 
   return (
-    <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6">
-      <h2 className="text-2xl font-bold text-gray-800 mb-6">Liste des Acteurs</h2>
-      
-      {/* Barre de recherche */}
-      <form className="flex items-center w-full max-w-4xl mb-4" onSubmit={handleSearch}>
-        <input
-          type="text"
-          placeholder="Rechercher un acteur..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="flex-1 px-4 py-2 border border-gray-300 rounded-l-md focus:outline-none"
-        />
-        <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded-r-md hover:bg-blue-700"
-        >
-          Rechercher
-        </button>
-        <button
-          type="button"
-          onClick={refreshData}
-          className={`ml-2 p-2 rounded-full ${isRefreshing ? "animate-spin" : ""} bg-gray-200 hover:bg-gray-300`}
-          title="Rafraîchir les données"
-        >
-          <FaSync />
-        </button>
-      </form>
+    <LayoutRepasseur>
+      <div className="p-6 bg-white rounded-lg shadow-md">
+        {/* Titre */}
+        <h1 className="text-2xl font-bold text-blue-600 mb-6">Tâches en Repassage</h1>
 
-      {/* Table des acteurs */}
-      <div className="w-full max-w-4xl bg-white shadow-md rounded-lg overflow-hidden">
-        <table className="table-auto w-full border-collapse border border-gray-200">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="px-4 py-2 text-left text-gray-700">Nom</th>
-              <th className="px-4 py-2 text-left text-gray-700">Prénom</th>
-              <th className="px-4 py-2 text-left text-gray-700">Email</th>
-              <th className="px-4 py-2 text-left text-gray-700">Téléphone</th>
-              <th className="px-4 py-2 text-left text-gray-700">Rôle</th>
-              <th className="px-4 py-2 text-center text-gray-700">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {localActeurs.map((acteur) => (
-              <tr key={acteur.id} className="hover:bg-gray-100">
-                <td className="border px-4 py-2">{acteur.nom}</td>
-                <td className="border px-4 py-2">{acteur.prenom}</td>
-                <td className="border px-4 py-2">{acteur.email}</td>
-                <td className="border px-4 py-2">{acteur.telephone}</td>
-                <td className="border px-4 py-2">{acteur.role}</td>
-                <td className="border px-4 py-2 text-center space-x-2">
-                  <button
-                    onClick={() => handleEdit(acteur.id)}
-                    className="text-blue-600 hover:text-blue-800"
-                    title="Modifier"
-                  >
-                    <FaEdit />
-                  </button>
-                  <button
-                    onClick={() => handleDelete(acteur.id)}
-                    className="text-red-600 hover:text-red-800"
-                    title="Supprimer"
-                  >
-                    <FaTrash />
-                  </button>
-                </td>
+        {/* Vérification s'il y a des vêtements en lavage */}
+        {vetementsEnRepassage.length === 0 ? (
+          <p className="text-gray-500">Aucun vêtement n'est actuellement en Repassage.</p>
+        ) : (
+          <table className="w-full text-left border-collapse border border-gray-300">
+            <thead>
+              <tr className="bg-blue-100">
+                <th className="border px-4 py-2">Catégorie</th>
+                <th className="border px-4 py-2">Type</th>
+                <th className="border px-4 py-2">Couleur</th>
+                <th className="border px-4 py-2">Action</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {vetementsEnRepassage.map((vetement) => (
+                <tr key={vetement.id} className="hover:bg-gray-100">
+                  <td className="border px-4 py-2">{vetement.categorie.nom}</td>
+                  <td className="border px-4 py-2">{vetement.type.nom}</td>
+                  <td className="border px-4 py-2">
+                    <div
+                      className="w-6 h-6 rounded-full"
+                      style={{ backgroundColor: vetement.couleur }}
+                    ></div>
+                  </td>
+                  <td className="border px-4 py-2">
+                    {/* Bouton pour marquer comme terminé */}
+                    <button
+                      onClick={() => handleMarkAsFinished(vetement.id)}
+                      className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300"
+                    >
+                      Terminé
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
-    </div>
+    </LayoutRepasseur>
   );
-}
+};
 
-export default ListActeur;
+TacheRepassage.layout = (page) => <Layout children={page}/>
+export default TacheRepassage;

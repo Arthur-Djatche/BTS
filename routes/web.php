@@ -20,22 +20,23 @@ Route::get('/', function () {
 Route::post('/', [AuthController::class, 'login']);
 
 
-Route::get('/Repasseur', function () {
-    return Inertia::render('Repasseur');
-});
 
 Route::middleware(['Checkrole'])->group(function (){
 
 });
     
 Route::get('/Laveur', function () {
-    return Inertia::render('Laveur');
-});
-Route::get('/Laveur/Taches', [VetementController::class,'index']);
-
-Route::get('/laveur/acceuil', function () {
     return Inertia::render('DashboardLaveur');
-});
+})->name('laveur');
+Route::get('/Laveur/Taches', [VetementController::class,'indexLavage']);
+
+
+
+Route::get('/Repasseur', function () {
+    return Inertia::render('DashboardRepasseur');
+})->name('repasseur');
+
+Route::get('/repasseur/taches', [VetementController::class,'indexRepassage']);
 
 Route::get('/Receptionniste', function () {
     return Inertia::render('DashboardReceptionniste');
@@ -129,6 +130,8 @@ Route::get('/receptionniste/facture', [NouveauLavageController::class, 'showLast
     Route::get('/lavages/{lavage}/details', [LavageController::class, 'details']); // Détails d'un lavage
     Route::post('/vetements/{vetement}/retirer', [VetementController::class, 'retirer']); // Retirer un vêtement
     
-    Route::post('/vetements/{id}/update-etat', [VetementController::class, 'updateEtat']);
+    Route::patch('/vetements/{id}/update-etat', [VetementController::class, 'updateEtat']);
 
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    Route::get('/api/dernier-lavage', [LavageController::class, 'dernierLavage']);

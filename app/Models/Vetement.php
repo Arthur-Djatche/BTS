@@ -29,4 +29,15 @@ class Vetement extends Model
     {
         return $this->belongsTo(Client::class);
     }
+
+    public function laveur()
+{
+    return $this->belongsTo(Acteur::class, 'laveur_id');
+}
+
+public function repasseur()
+{
+    return $this->belongsTo(Acteur::class, 'repasseur_id');
+}
+    
 }

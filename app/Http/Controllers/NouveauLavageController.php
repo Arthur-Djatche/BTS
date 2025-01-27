@@ -10,6 +10,7 @@ use App\Models\Lavage;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class NouveauLavageController extends Controller
 {
@@ -47,6 +48,7 @@ class NouveauLavageController extends Controller
         // Création d'un lavage
         $lavage = Lavage::create([
             'client_id' => $validated['client_id'],
+            'receptionniste_id' => Auth::id(), // ID du réceptionniste authentifié
         ]);
 
         // Création des vêtements associés

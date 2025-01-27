@@ -19,4 +19,10 @@ class Lavage extends Model
     {
         return $this->hasMany(Vetement::class);
     }
+
+    public function receptionniste()
+{
+    return $this->belongsTo(Acteur::class, 'receptionniste_id');
+}
+
 }

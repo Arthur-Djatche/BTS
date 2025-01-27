@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { usePage } from "@inertiajs/react"; // Pour récupérer les données injectées depuis Laravel
 import { Inertia } from "@inertiajs/inertia"; // Pour gérer les requêtes via Inertia
 import LayoutLaveur from "@/Layouts/LayoutLaveur"; // Layout personnalisé pour les Laveur
+import Layout from "@/Layouts/Layout";
 
 const TacheLavages = () => {
   // Récupérer les données injectées via Inertia
@@ -10,7 +11,7 @@ const TacheLavages = () => {
   // Fonction pour mettre à jour l’état d’un vêtement
   const handleMarkAsFinished = (vetementId) => {
     // Envoyer une requête pour mettre à jour l’état du vêtement
-    Inertia.post(`/vetements/${vetementId}/update-etat`, { etat: "En repassage" }, {
+    Inertia.patch(`/vetements/${vetementId}/update-etat`, { etat: "En repassage" }, {
       onSuccess: () => {
         alert("Vêtement mis à jour avec succès !");
       },
@@ -73,4 +74,5 @@ const TacheLavages = () => {
   );
 };
 
+TacheLavages.layout = (page) => <Layout children={page}/>
 export default TacheLavages;

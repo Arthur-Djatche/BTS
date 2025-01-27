@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link, usePage } from "@inertiajs/react";
 import { Inertia } from "@inertiajs/inertia";
 
-function LayoutReceptionniste({ children }) {
+function LayoutLaveur({ children }) {
   const { url } = usePage(); // Récupère l'URL actuelle pour savoir quelle page est active
   // Charger les états initiaux depuis les props ou définir les valeurs par défaut
     const [isSidebarOpen, setSidebarOpen] = useState(false);
@@ -37,9 +37,9 @@ function LayoutReceptionniste({ children }) {
           <nav className="flex flex-col mt-4 bg-blue-600">
         {/* Lien vers la page "Acceuil" */}
         <Link
-            href="/laveur/acceuil"
+            href="/Laveur"
             className={`px-4 py-3 text-left rounded-md mx-2 my-1 ${
-              url === "/laveur/acceuil"
+              url === "/Laveur"
                 ? "bg-blue-500 text-white" // Style pour l'élément actif
                 : "text-wh hover:bg-blue-500" // Style par défaut avec effet hover
             }`}
@@ -71,4 +71,4 @@ function LayoutReceptionniste({ children }) {
   );
 }
 
-export default LayoutReceptionniste;
+export default LayoutLaveur;

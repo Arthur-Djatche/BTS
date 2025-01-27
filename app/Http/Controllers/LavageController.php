@@ -6,6 +6,7 @@ use App\Models\Lavage;
 
 use Illuminate\Http\Request;
 
+
 class LavageController extends Controller
 {
     public function index()
@@ -19,6 +20,7 @@ class LavageController extends Controller
     ]);
 }
 
+
 public function retirer(Lavage $lavage)
 {
     $lavage->update(['etat' => 'Retiré']);
@@ -31,5 +33,17 @@ public function details(Lavage $lavage)
     $lavage->load('client', 'vetements.categorie', 'vetements.type');
     return inertia('DetailsVetements', compact('lavage'));
 }
+public function dernierLavage()
+{
+    // Récupérer le dernier lavage enregistré avec ses vêtements
+    $dernierLavage = Lavage::with('vetements')
+        ->latest('created_at') // Trier par date de création
+        ->first();
 
+    if (!$dernierLavage) {
+        return response()->json(['message' => 'Aucun lavage trouvé'], 404);
+    }
+
+    return response()->json(['lavage' => $dernierLavage]);
+}
 }

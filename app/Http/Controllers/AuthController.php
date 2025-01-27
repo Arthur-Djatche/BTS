@@ -42,11 +42,11 @@ class AuthController extends Controller
                     return redirect()->route('Admin'); // Route pour admin
                 case 'receptionniste':
                     return redirect()->route('Receptionniste'); // Route pour user
-                case 'acteur':
-                    return redirect()->route('acteur.dashboard'); // Route pour acteur
+                case 'laveur':
+                    return redirect()->route('laveur'); // Route pour acteur
                 default:
                     Auth::logout();
-                    return redirect()->route('login')->with('error', 'Rôle non reconnu.');
+                    return redirect()->route('repasseur')->with('error', 'Rôle non reconnu.');
             }
         }
 
