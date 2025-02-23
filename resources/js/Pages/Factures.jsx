@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
 import Barcode from "react-barcode"; // Pour générer les codes-barres
-import QRCode from "react-qr-code"; // 📌 Utiliser "react-qr-code" à la place
 import { usePage} from "@inertiajs/react"; // Pour accéder aux données envoyées par le backend via Inertia
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
 import Layout from "@/Layouts/Layout";
@@ -62,16 +61,14 @@ const { lavage } = usePage().props; // Récupération des données injectées pa
           <p className="text-blue-600">
             <strong>Nombre de vêtements :</strong> {vetements.length}
           </p>
-          <p className="text-blue-600" > 
-            <strong >Code de retrait :{lavage.code_retrait}</strong>
-          </p>
+          <p>Code de retrait : <strong className="text-red-500 text-lg">{lavage.code_retrait}</strong></p>
           {/* ID du lavage avec un code-barres */}
           <p className="text-blue-600">
             <strong>ID Lavage :</strong> {id}
           </p>
           <div className="mt-2">
             {/* Génération du code-barres pour l'ID du lavage */}
-            <QRCode value={id.toString()} size={100} />
+            <Barcode value={id.toString()} width={2} height={50} />
           </div>
         </div>
 
@@ -109,7 +106,7 @@ const { lavage } = usePage().props; // Récupération des données injectées pa
                   </td>
                   {/* Code-barres généré pour l'ID du vêtement */}
                   <td className="border border-blue-300 px-4 py-2">
-                    <QRCode value={vetement.id.toString()} size={80} />
+                    <Barcode value={vetement.id.toString()} width={2} height={50} />
                   </td>
                 </tr>
               ))}

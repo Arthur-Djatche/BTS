@@ -8,7 +8,7 @@ class Lavage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['client_id'];
+    protected $fillable = ['client_id', 'code_retrait',];
 
     public function client()
     {

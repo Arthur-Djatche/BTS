@@ -12,6 +12,7 @@ use App\Http\Controllers\NouveauLavageController;
 
 use App\Http\Controllers\LavageController;
 use App\Http\Controllers\VetementController;
+use App\Http\Controllers\FactureController;
 
 Route::get('/', function () {
     return Inertia::render('Login');
@@ -103,9 +104,9 @@ Route::post('/receptionniste/nouveau-lavage',[NouveauLavageController::class, 's
 Route::get('/receptionniste/etat-lavage', function(){
     return Inertia::render('EtatLavage');
 });
-Route::get('/receptionniste/facture', function(){
-    return Inertia::render('Facture');
-});
+// Route::get('/receptionniste/facture', function(){
+//     return Inertia::render('Facture');
+// });
 
 Route::get('/receptionniste/acceuil', function(){
     return Inertia::render('DashboardReceptionniste');
@@ -118,9 +119,13 @@ Route::post('/clients', [ClientController::class, 'store']);
 
 // Route::post('/lavages', [NouveauLavage::class, 'store']);
 
-Route::get('/receptionniste/facture', [NouveauLavageController::class, 'showLastLavage'])
-    ->name('receptionniste.facture');
+Route::get('/receptionniste/facture', [NouveauLavageController::class, 'showLastLavage'])->name('facture');
+// Route::post('/receptionniste/factures', [FactureController::class, 'ImprimerFacture'])->name('factures');
+Route::get('/receptionniste/factures/{id}', [FactureController::class, 'show'])->name('receptionniste.facture');
 
+// Route::get('/receptionniste/factures', function(){
+//     return Inertia::render('Factures');
+// });
 
 
    
@@ -135,3 +140,9 @@ Route::get('/receptionniste/facture', [NouveauLavageController::class, 'showLast
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
     Route::get('/api/dernier-lavage', [LavageController::class, 'dernierLavage']);
+
+    Route::get('/test-inertia', function () {
+        dd(request()->header('X-Inertia'));
+    });
+
+Route::post('receptionniste/verifier-retrait', [LavageController::class, 'verifierCodeRetrait']);

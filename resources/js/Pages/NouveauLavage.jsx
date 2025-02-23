@@ -79,35 +79,36 @@ const NouveauLavage = () => {
   //   };
   // };
 
-  const handleSave = (onSuccessCallback) => {
+  const handleSave = (e) => {
+    e.preventDefault();
     if (!selectedClient) {
       alert("Veuillez sélectionner un client.");
       return;
     }
-  
+
+    if (vetements.length === 0) {
+      alert("Veuillez ajouter au moins un vêtement.");
+      return;
+    }
+
+
     const data = {
-      client_id: selectedClient.id, // ID du client sélectionné
-      vetements: vetements, // Liste des vêtements récupérés
+      client_id: selectedClient.id,
+      vetements: vetements,
     };
-  
+
     console.log("Données envoyées :", data);
-  
-    // Insérer les données dans la base de données
+
     Inertia.post("/receptionniste/nouveau-lavage", data, {
-      onSuccess: () => {
-        alert("Lavage enregistré avec succès !");
-        if (onSuccessCallback) {
-          onSuccessCallback(); // Exécute la redirection ou toute autre action
-        }
+      onSuccess: (response) => {
+        console.log("✅ Réponse Laravel complète :", response);
       },
       onError: (errors) => {
-        console.error(errors);
-        alert("Une erreur s'est produite lors de l'enregistrement.");
+        console.error("❌ Erreur lors de l'enregistrement :", errors);
+        alert("Erreur lors de l'enregistrement.");
       },
     });
-  };
-  
-  
+};
 
   const handleAddClient = (e) => {
     e.preventDefault();
@@ -235,21 +236,17 @@ const NouveauLavage = () => {
               </div>
             </div>
           ))}
-<Link href="/receptionniste/facture">
+
           {/* Bouton Suivant */}
-          <button   onClick={() => {
-    handleSave(() => {
-      // Rediriger après le succès de handleSave
-      Inertia.visit("/receptionniste/facture");
-    });
-  }}
+          
+          <button   onClick={handleSave}
  
             className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
             
           >
             Suivant
           </button> 
-          </Link>
+        
         </form>
       </div>
 

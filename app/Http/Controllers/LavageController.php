@@ -46,4 +46,26 @@ public function dernierLavage()
 
     return response()->json(['lavage' => $dernierLavage]);
 }
+
+public function verifierCodeRetrait(Request $request)
+{
+    $validated = $request->validate([
+        'lavage_id' => 'required|exists:lavages,id',
+        'code_retrait' => 'required|string',
+    ]);
+
+    $lavage = Lavage::find($validated['lavage_id']);
+
+    if (!$lavage) {
+        return response()->json(['valid' => false, 'message' => "Lavage introuvable."], 404);
+    }
+
+    if (strtolower(trim($lavage->code_retrait)) === strtolower(trim($validated['code_retrait']))) {
+        return response()->json(['valid' => true]);
+    } else {
+        return response()->json(['valid' => false, 'message' => "Code incorrect."], 200);
+    }
+}
+
+
 }

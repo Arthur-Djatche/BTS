@@ -8,6 +8,7 @@ use App\Models\Lavage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\VetementsPretsMail;
+use App\Mail\VetementsEnLavageMail;
 use Illuminate\Support\Facades\Mail;
 
 
@@ -35,7 +36,7 @@ public function updateEtat(Request $request, $id)
         $vetement->laveur_id = Auth::id(); // ID du laveur authentifié
     } elseif ($validated['etat'] === 'Terminé') {
         $vetement->repasseur_id = Auth::id(); // ID du repasseur authentifié
-    }
+     }  
 
     $vetement->etat = $validated['etat'];
     $vetement->save(); // Sauvegarder les modifications
@@ -47,6 +48,14 @@ public function updateEtat(Request $request, $id)
     if ($tousPrets) {
         // Envoyer un email au client si tous les vêtements sont prêts
         Mail::to($lavage->client->email)->send(new VetementsPretsMail($lavage));
+    }
+    // Vérifier si tous les vêtements du lavage sont à l'état "En Lavage"
+    $lavage = Lavage::with('vetements')->findOrFail($vetement->lavage_id);
+    $tousEnLavage = $lavage->vetements->every(fn($v) => $v->etat === 'En lavage');
+
+    if ($tousEnLavage) {
+        // Envoyer un email au client si tous les vêtements sont prêts
+        Mail::to($lavage->client->email)->send(new VetementsEnLavageMail($lavage));
     }
 
     return redirect()->back()->with('success', 'État du vêtement mis à jour avec succès.');

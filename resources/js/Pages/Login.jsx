@@ -1,5 +1,5 @@
 import Layout from "@/Layouts/Layout";
-import { useForm } from "@inertiajs/react";
+import { useForm, Link } from "@inertiajs/react";
 function Login() {
 
   const { data, setData, post, processing, errors } = useForm({
@@ -74,12 +74,16 @@ function handleSubmit (e) {
         >
           Se connecter
         </button>
+        <Link href="/Inscription"
+        class="ml-8 underline ">s'inscrire / completez votre inscription </Link>
       </form>
+      
     </div>
         </>
     );
 }
 
 Login.layout = page => <Layout children={page}/>
+
 
 export default Login;

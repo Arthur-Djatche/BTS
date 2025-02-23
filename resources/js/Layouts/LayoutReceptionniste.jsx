@@ -59,7 +59,16 @@ function LayoutReceptionniste({ children }) {
           >
             Nouveau Lavage
           </Link>
-
+          {/* <Link
+                      href="/receptionniste/etat-lavage"
+                      className={`px-4 py-3 text-left rounded-md mx-2 my-1 ${
+                        url === "/receptionniste/etat-lavage"
+                          ? "bg-blue-500 text-white" // Style pour l'élément actif
+                          : "text-wh hover:bg-blue-500" // Style par défaut avec effet hover
+                      }`}
+                    >
+                      Imprimer Factures
+                    </Link> */}
           {/* Lien vers la page "État Lavage" */}
           <Link
             href="/receptionniste/etat-lavage"
@@ -71,6 +80,7 @@ function LayoutReceptionniste({ children }) {
           >
             État Lavage
           </Link>
+         
         </nav>
       </aside>
     

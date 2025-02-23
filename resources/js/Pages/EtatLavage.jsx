@@ -4,6 +4,9 @@ import { Inertia } from "@inertiajs/inertia"; // Gestion des requêtes avec Iner
 import { usePage } from "@inertiajs/react"; // Récupération des données injectées via Inertia
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste"; // Layout personnalisé pour les réceptionnistes
 import Layout from "@/Layouts/Layout";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+import axios from "axios";
 
 /**
  * Fonction utilitaire : Détermine l'état d'un lavage en fonction des états des vêtements associés.
@@ -16,6 +19,10 @@ const getEtatLavage = (vetements) => {
   if (allRetired) {
     return "Retiré"; // Retourne "Retiré" si tous les vêtements sont retirés
   }
+  const allBegin = vetements.every((vetement) => vetement.etat ==="Initial");
+  if (allBegin) {
+    return "ImprimerFacture";
+  }
 
   // Vérifie si tous les vêtements sont dans l'état "Terminé"
   const allFinished = vetements.every((vetement) => vetement.etat === "Terminé");
@@ -23,9 +30,14 @@ const getEtatLavage = (vetements) => {
 };
 
 // Composant principal pour afficher l'état des lavages
-const EtatLavage = () => {
+const EtatLavage = ({lavages}) => {
   // Récupération des données injectées par Inertia (liste des lavages et autres informations)
-  const { lavages } = usePage().props;
+  const [lavageIdSelectionne, setLavageIdSelectionne] = useState(null); // Stocker l'ID du lavage sélectionné
+const [showModal, setShowModal] = useState(false); // Contrôle l'affichage de la modale
+const [codeRetrait, setCodeRetrait] = useState(""); // Stocke le code de retrait saisi
+const [message, setMessage] = useState(""); // Message de succès ou d'erreur
+
+
 
   // État local pour la recherche (filtrer les lavages par ID)
   const [searchTerm, setSearchTerm] = useState("");
@@ -62,6 +74,75 @@ const EtatLavage = () => {
       console.error("Erreur lors de la mise à jour :", error);
     }
   };
+
+  const handleFacture = (e, lavageId) => {
+    e.stopPropagation();
+    
+        Inertia.visit(`/receptionniste/factures/${lavageId}`);
+      
+  
+  };
+
+  const verifierCodeRetrait = () => {
+    if (!lavageIdSelectionne) {
+      toast.warn("⚠️ Veuillez entrer un code de retrait.", { position: "top-right" });
+      return;
+    }
+  
+    if (!codeRetrait) {
+      toast.warn("⚠️ Veuillez entrer un code de retrait.", { position: "top-right" });
+      return;
+    }
+  
+    // Envoyer les données au backend pour vérification
+    Inertia.post("/receptionniste/verifier-retrait", {
+      lavage_id: lavageIdSelectionne,
+      code_retrait: codeRetrait,
+    }, {
+      onSuccess: (page) => {
+        const result = page.props.valid;
+        if (result) {
+            toast.success("Code correct, retrait en cours...");
+            closeModal();
+            handleRetirer(selectedLavageId); // ✅ Appel de la fonction de retrait
+        } else {
+            toast.error("Code incorrect, veuillez réessayer !");
+        }
+    },
+    onError: () => {
+        toast.error("Erreur lors de la vérification !");
+    }
+    });
+  };
+  
+  const handleVerification = async () => {
+    if (!lavageIdSelectionne || !codeRetrait) {
+        toast.warn("Veuillez entrer un code de retrait.");
+        return;
+    }
+
+    try {
+        const response = await axios.post("http://127.0.0.1:8000/receptionniste/verifier-retrait", {
+            lavage_id: lavageIdSelectionne,
+            code_retrait: codeRetrait,
+        });
+
+        console.log("🔍 Réponse API :", response.data);
+
+        if (response.data.valid) {
+            toast.success("✅ Code correct !");
+            setShowModal(false);
+            handleRetirer(lavageIdSelectionne);
+        } else {
+            toast.error("❌ " + response.data.message);
+        }
+    } catch (error) {
+        console.error("🚨 Erreur API :", error);
+        toast.error("Erreur lors de la vérification.");
+    }
+};
+  
+  
 
   // Affichage du composant
   return (
@@ -102,9 +183,12 @@ const EtatLavage = () => {
                 <tr
                   key={lavage.id}
                   className="hover:bg-gray-100 cursor-pointer"
-                  onClick={() => Inertia.visit(`/lavages/${lavage.id}/details`)} // Redirection vers les détails
+                   onClick={() => Inertia.visit(`/lavages/${lavage.id}/details`)}// Redirection vers les détails
                 >
-                  <td className="border px-4 py-2">{lavage.id}</td>
+                  <td 
+                  
+                  className="border px-4 py-2" > {lavage.id}
+                  </td>
                   <td className="border px-4 py-2">{lavage.client.nom}</td>
                   <td className="border px-4 py-2">{etat}</td>
                   <td className="border px-4 py-2">
@@ -113,13 +197,26 @@ const EtatLavage = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation(); // Empêche l'exécution de l'événement parent (redirection)
-                          handleRetirer(lavage.id); // Met à jour l'état du lavage
+                          setLavageIdSelectionne(lavage.id); // Stocke l'ID du lavage cliqué
+                          setShowModal(true); // Met à jour l'état du lavage
                         }}
                         className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none"
                       >
                         Retirer
                       </button>
+                      
                     )}
+                    {etat === "ImprimerFacture" && (
+  <button
+    onClick={(e) => {
+      handleFacture(e, lavage.id);
+    }}
+    className="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-500 focus:outline-none"
+  >
+    Imprimer Facture
+  </button>
+)}
+
                   </td>
                 </tr>
               );
@@ -127,6 +224,47 @@ const EtatLavage = () => {
           </tbody>
         </table>
       </div>
+      {showModal && (
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+      <h2 className="text-xl font-semibold text-blue-600 mb-4">Vérification du Code</h2>
+      
+      <p className="text-gray-600">Entrez le code de retrait :</p>
+
+      <input
+        type="text"
+        value={codeRetrait}
+        onChange={(e) => setCodeRetrait(e.target.value)}
+        className="w-full border px-4 py-2 rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+      />
+
+      {message && <p className="text-red-500 mt-2">{message}</p>}
+
+      <div className="flex justify-end mt-4">
+        <button
+          onClick={() => {
+            setShowModal(false); // Fermer la modale
+            setCodeRetrait(""); // Réinitialiser le champ
+            setMessage(""); // Effacer le message
+          }}
+          className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+        >
+          Annuler
+        </button>
+
+        <button
+          onClick={() => { handleVerification();
+                            // setShowModal(false); 
+          }} // Vérification du code de retrait
+          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ml-2"
+        >
+          Confirmer
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </LayoutReceptionniste>
   );
 };
