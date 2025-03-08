@@ -1,17 +1,22 @@
-<?php 
+<?php
+
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class Client extends Model
+class Emplacement extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nom', 'prenom', 'email', 'telephone', 'structure_id'];
+    protected $fillable = ['nom','structure_id'];
 
     public function lavages()
     {
         return $this->hasMany(Lavage::class);
+    }
+    public function structure()
+    {
+        return $this->belongsTo(Structure::class);
     }
 }

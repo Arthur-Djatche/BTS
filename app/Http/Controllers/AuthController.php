@@ -9,17 +9,22 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Models\Acteur;
-
+use Inertia\Inertia;
 
 class AuthController extends Controller
 {
     /**
      * Affiche le formulaire de connexion.
      */
-    public function showLoginForm()
-    {
-        return view('Login'); // Remplacez par votre vue de connexion
-    }
+    public function showStructureLogin()
+{
+    return Inertia::render('LoginStructure');
+}
+
+public function showActeursLogin()
+{
+    return Inertia::render('Login');
+}
 
     /**
      * Gère la connexion de l'utilisateur.
@@ -27,28 +32,28 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         // Valider les données du formulaire
-        $credentials = $request->validate([
+        $request->validate([
             'email' => 'required|email',
-            'password' => 'required|string|min:8',
+            'password' => 'required',
         ]);
 
-        // Vérifier les identifiants
-        if (Auth::attempt($credentials)) {
-            $user = Auth::user();
+       // 🔥 Authentifier avec le guard 'structure'
+       if (Auth::guard('web')->attempt($request->only('email', 'password'))) {
+        $request->session()->regenerate();
 
-            // Rediriger en fonction du rôle
-            switch ($user->role) {
-                case 'admin':
-                    return redirect()->route('Admin'); // Route pour admin
-                case 'receptionniste':
-                    return redirect()->route('Receptionniste'); // Route pour user
-                case 'laveur':
-                    return redirect()->route('laveur'); // Route pour acteur
-                default:
-                    Auth::logout();
-                    return redirect()->route('repasseur')->with('error', 'Rôle non reconnu.');
-            }
+        // ✅ Récupérer l'acteur connecté
+        $acteur = Auth::guard('web')->user();
+
+        // 🎯 Redirection en fonction du rôle
+        switch ($acteur->role) {
+            case 'repasseur':
+                return redirect()->route('Admin'); // Route pour admin
+            case 'receptionniste':
+                return redirect()->route('Receptionniste'); // Route pour user
+            case 'laveur':
+                return redirect()->route('laveur'); // Route pour acteur
         }
+    }
 
         // Si les identifiants sont incorrects
         return back()->withErrors([
@@ -60,14 +65,19 @@ class AuthController extends Controller
      * Déconnexion de l'utilisateur.
      */
     public function logout(Request $request)
-    {
-        // Déconnecte l'utilisateur
-        Auth::logout();
-
-        // Invalide la session et redirige vers la page de connexion
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect('/'); // Redirige vers la page de connexion
+{
+    // ✅ Vérifier quel type d'utilisateur est connecté
+    if (Auth::guard('web')->check()) {
+        Auth::guard('web')->logout(); // Déconnecter l'acteur (réceptionniste, repasseur, etc.)
+    } elseif (Auth::guard('structure')->check()) {
+        Auth::guard('structure')->logout(); // Déconnecter la structure
     }
+
+    // ✅ Invalider la session et régénérer le token CSRF
+    $request->session()->invalidate();
+    $request->session()->regenerateToken();
+
+    // ✅ Redirection vers la page de connexion
+    return redirect('/bienvenue');
+}
 }

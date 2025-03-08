@@ -5,6 +5,7 @@ import { usePage } from "@inertiajs/react";
 import Layout from "@/Layouts/Layout";
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
 import Barcode from "react-barcode";
+import { router } from '@inertiajs/react';
 
 const NouveauLavage = () => {
   const [nomClient, setNomClient] = useState("");
@@ -99,7 +100,7 @@ const NouveauLavage = () => {
 
     console.log("Données envoyées :", data);
 
-    Inertia.post("/receptionniste/nouveau-lavage", data, {
+    router.post("/receptionniste/nouveau-lavage", data, {
       onSuccess: (response) => {
         console.log("✅ Réponse Laravel complète :", response);
       },
@@ -112,7 +113,7 @@ const NouveauLavage = () => {
 
   const handleAddClient = (e) => {
     e.preventDefault();
-    Inertia.post("/clients", newClient, {
+    router.post("/clients", newClient, {
       onSuccess: () => {
         setShowModal(false); // Fermer la fenêtre après succès
         setNewClient({ nom: "", prenom: "", email: "", telephone: "" }); // Réinitialiser le formulaire
@@ -258,7 +259,7 @@ const NouveauLavage = () => {
       <form
         onSubmit={(e) => {
           e.preventDefault(); // Empêche le rechargement de la page
-          Inertia.post("/clients", newClient, {
+          router.post("/clients", newClient, {
             onSuccess: () => {
               setShowModal(false); // Fermer la fenêtre si la requête est réussie
               setNewClient({ nom: "", prenom: "", email: "", telephone: "" }); // Réinitialiser le formulaire

@@ -28,7 +28,7 @@ function Header({ children }) {
   return (
     <>
       {/* Barre de navigation */}
-      <div className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md border-b border-blue-700 z-50">
+      <div className="print:hidden fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md border-b border-blue-700 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           {/* Logo ou icône de l'entreprise */}
           <div className="flex items-center space-x-3 ml-80">

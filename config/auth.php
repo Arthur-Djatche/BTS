@@ -7,15 +7,14 @@ return [
     | Authentication Defaults
     |--------------------------------------------------------------------------
     |
-    | This option defines the default authentication "guard" and password
-    | reset "broker" for your application. You may change these values
-    | as required, but they're a perfect start for most applications.
+    | Ici, on définit le guard et le système de récupération de mot de passe
+    | par défaut. Nous utilisons "structure" comme authentification principale.
     |
     */
 
     'defaults' => [
-        'guard' => env('AUTH_GUARD', 'web'),
-        'passwords' => env('AUTH_PASSWORD_BROKER', 'acteurs'),  // Changez "acteurs" si nécessaire
+        'guard' => 'structure',  // ✅ Par défaut, on utilise l'authentification d'une structure
+        'passwords' => 'structures',
     ],
 
     /*
@@ -23,22 +22,20 @@ return [
     | Authentication Guards
     |--------------------------------------------------------------------------
     |
-    | Next, you may define every authentication guard for your application.
-    | Of course, a great default configuration has been defined for you
-    | which utilizes session storage plus the Eloquent user provider.
-    |
-    | All authentication guards have a user provider, which defines how the
-    | users are actually retrieved out of your database or other storage
-    | system used by the application. Typically, Eloquent is utilized.
-    |
-    | Supported: "session"
+    | Chaque guard correspond à un type d'utilisateur qui peut se connecter.
+    | Nous avons ici deux guards : `structure` et `acteur`.
     |
     */
 
     'guards' => [
+        'structure' => [
+            'driver' => 'session',
+            'provider' => 'structures',
+        ],
+
         'web' => [
             'driver' => 'session',
-            'provider' => 'acteurs',  // Assurez-vous que cela correspond à votre provider
+            'provider' => 'acteurs',
         ],
     ],
 
@@ -47,25 +44,21 @@ return [
     | User Providers
     |--------------------------------------------------------------------------
     |
-    | All authentication guards have a user provider, which defines how the
-    | users are actually retrieved out of your database or other storage
-    | system used by the application. Typically, Eloquent is utilized.
-    |
-    | If you have multiple user tables or models you may configure multiple
-    | providers to represent the model / table. These providers may then
-    | be assigned to any extra authentication guards you have defined.
-    |
-    | Supported: "database", "eloquent"
+    | Ici, on configure comment récupérer les utilisateurs depuis la base de données.
+    | Nous avons deux modèles : `Structure` et `Acteur`.
     |
     */
 
     'providers' => [
-        'acteurs' => [
+        'structures' => [
             'driver' => 'eloquent',
-            'model' => env('AUTH_MODEL', App\Models\Acteur::class),  // Assurez-vous que le modèle Acteur est bien utilisé
+            'model' => App\Models\Structure::class, // ✅ Modèle Structure
         ],
 
-        // Vous pouvez également ajouter un autre provider si vous utilisez une autre méthode (par ex. database).
+        'acteurs' => [
+            'driver' => 'eloquent',
+            'model' => App\Models\Acteur::class, // ✅ Modèle Acteur
+        ],
     ],
 
     /*
@@ -73,24 +66,22 @@ return [
     | Resetting Passwords
     |--------------------------------------------------------------------------
     |
-    | These configuration options specify the behavior of Laravel's password
-    | reset functionality, including the table utilized for token storage
-    | and the user provider that is invoked to actually retrieve users.
-    |
-    | The expiry time is the number of minutes that each reset token will be
-    | considered valid. This security feature keeps tokens short-lived so
-    | they have less time to be guessed. You may change this as needed.
-    |
-    | The throttle setting is the number of seconds a user must wait before
-    | generating more password reset tokens. This prevents the user from
-    | quickly generating a very large amount of password reset tokens.
+    | Laravel permet de gérer les réinitialisations de mots de passe.
+    | On configure ici les tables de réinitialisation pour chaque type d'utilisateur.
     |
     */
 
     'passwords' => [
+        'structures' => [
+            'provider' => 'structures',
+            'table' => 'password_reset_tokens',
+            'expire' => 60,
+            'throttle' => 60,
+        ],
+
         'acteurs' => [
-            'provider' => 'acteurs',  // Assurez-vous d'utiliser "acteurs" ici aussi
-            'table' => env('AUTH_PASSWORD_RESET_TOKEN_TABLE', 'password_reset_tokens'),
+            'provider' => 'acteurs',
+            'table' => 'password_reset_tokens',
             'expire' => 60,
             'throttle' => 60,
         ],
@@ -101,12 +92,9 @@ return [
     | Password Confirmation Timeout
     |--------------------------------------------------------------------------
     |
-    | Here you may define the amount of seconds before a password confirmation
-    | window expires and users are asked to re-enter their password via the
-    | confirmation screen. By default, the timeout lasts for three hours.
+    | Temps avant qu'un utilisateur doive reconfirmer son mot de passe.
     |
     */
 
-    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
-
+    'password_timeout' => 10800, // 3 heures
 ];

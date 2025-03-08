@@ -70,7 +70,8 @@
                 </li>
             @endforeach
         </ul>
-<p> Pour acceder a vos vêtements, code de retrait: 77777 </p>
+        <p>Pour accéder à vos vêtements, utilisez le code de retrait suivant :</p>
+        <h2 style="text-align: center; color: #d32f2f;">{{ $lavage['code_retrait'] }}</h2>
         <p class="footer">Merci de nous avoir fait confiance. À très bientôt !</p>
     </div>
 </body>

@@ -8,7 +8,7 @@ class Lavage extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['client_id', 'code_retrait',];
+    protected $fillable = ['client_id', 'code_retrait','receptionniste_id','emplacement_id',];
 
     public function client()
     {
@@ -24,5 +24,11 @@ class Lavage extends Model
 {
     return $this->belongsTo(Acteur::class, 'receptionniste_id');
 }
+
+public function emplacement()
+{
+    return $this->belongsTo(Emplacement::class);
+}
+
 
 }

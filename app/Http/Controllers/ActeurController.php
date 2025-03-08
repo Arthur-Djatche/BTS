@@ -7,7 +7,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
+
 class ActeurController extends Controller
+
 {
     public function store(Request $request)
     {
@@ -86,6 +89,14 @@ class ActeurController extends Controller
 
     public function addActor(Request $request)
 {
+    // Vérifier si une structure est bien connectée
+    if (!Auth::guard('structure')->check()) {
+        return response()->json(['error' => 'Aucune structure connectée.'], 403);
+    }
+
+     // Récupérer l'ID de la structure connectée
+     $structureId = Auth::guard('structure')->id();
+
     $request->validate([
         'nom' => 'nullable|string|max:255',
         'prenom' => 'nullable|string|max:255',
@@ -105,8 +116,11 @@ class ActeurController extends Controller
         'password' => bcrypt('default_password'), // Peut être une valeur par défaut
         'nom' => $request->nom, // ?? 'Nom par défaut',
         'prenom' => $request->prenom,  //?? 'Prenom par défaut',
-    ]);
+        'structure_id' => $structureId, // 🔥 On assigne la structure connectée
+       
 
+    ]);
+        
     return response()->json(['message' => 'Acteur ajouté avec succès.', 'acteur' => $acteur], 201);
 }
     return response()->json(['message' => 'email existant', 'acteur' => $acteur], 201);
@@ -141,9 +155,18 @@ public function completeRegistration(Request $request)
 
 public function index()
 {
-    $acteurs = Acteur::all();
+    // ✅ Vérifier si une structure est connectée
+    $structure = Auth::guard('structure')->user();
 
-    return Inertia::render('Admin', [
+    if (!$structure) {
+        return redirect()->route('login')->withErrors('Aucune structure connectée.');
+    }
+
+    // ✅ Récupérer tous les acteurs appartenant à cette structure
+    $acteurs = Acteur::where('structure_id', $structure->id)->get();
+
+    // ✅ Retourner les données au frontend via Inertia
+    return Inertia::render('ListActeur', [
         'acteurs' => $acteurs,
     ]);
 }

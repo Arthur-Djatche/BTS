@@ -1,5 +1,5 @@
 // Importation des modules nécessaires
-import React, { useState } from "react"; // Gestion des états locaux
+import React, { useState, useEffect } from "react"; // Gestion des états locaux
 import { Inertia } from "@inertiajs/inertia"; // Gestion des requêtes avec Inertia.js
 import { usePage } from "@inertiajs/react"; // Récupération des données injectées via Inertia
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste"; // Layout personnalisé pour les réceptionnistes
@@ -7,6 +7,8 @@ import Layout from "@/Layouts/Layout";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
+import { Html5QrcodeScanner } from "html5-qrcode"; // 📌 Importation du scanner QR
+
 
 /**
  * Fonction utilitaire : Détermine l'état d'un lavage en fonction des états des vêtements associés.
@@ -36,6 +38,7 @@ const EtatLavage = ({lavages}) => {
 const [showModal, setShowModal] = useState(false); // Contrôle l'affichage de la modale
 const [codeRetrait, setCodeRetrait] = useState(""); // Stocke le code de retrait saisi
 const [message, setMessage] = useState(""); // Message de succès ou d'erreur
+const [mode, setMode] = useState("manual"); // ✅ Mode actuel (manuel ou QR)
 
 
 
@@ -141,6 +144,28 @@ const [message, setMessage] = useState(""); // Message de succès ou d'erreur
         toast.error("Erreur lors de la vérification.");
     }
 };
+
+ // ✅ Scanner QR Code avec html5-qrcode
+ useEffect(() => {
+  if (mode === "qr" && showModal) {
+    const scanner = new Html5QrcodeScanner("reader", {
+      fps: 10,
+      qrbox: 250,
+    });
+
+    scanner.render(
+      (decodedText) => {
+        setCodeRetrait(decodedText); // ✅ Récupération du code scanné
+        setMode("manual"); // Retour en mode manuel après scan
+      },
+      (errorMessage) => {
+        console.error("Erreur de scan :", errorMessage);
+      }
+    );
+
+    return () => scanner.clear();
+  }
+}, [mode, showModal]);
   
   
 
@@ -224,47 +249,71 @@ const [message, setMessage] = useState(""); // Message de succès ou d'erreur
           </tbody>
         </table>
       </div>
-      {showModal && (
-  <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-      <h2 className="text-xl font-semibold text-blue-600 mb-4">Vérification du Code</h2>
-      
-      <p className="text-gray-600">Entrez le code de retrait :</p>
+       {/* Fenêtre Modale de Vérification */}
+       {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-semibold text-blue-600 mb-4">Vérification du Code</h2>
 
-      <input
-        type="text"
-        value={codeRetrait}
-        onChange={(e) => setCodeRetrait(e.target.value)}
-        className="w-full border px-4 py-2 rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-      />
+            {/* ✅ Choix entre saisie manuelle ou scan QR */}
+            <div className="flex justify-center mb-3">
+              <button
+                onClick={() => setMode("manual")}
+                className={`px-4 py-2 rounded-l ${
+                  mode === "manual" ? "bg-blue-600 text-white" : "bg-gray-200"
+                }`}
+              >
+                Saisie manuelle
+              </button>
+              <button
+                onClick={() => setMode("qr")}
+                className={`px-4 py-2 rounded-r ${
+                  mode === "qr" ? "bg-blue-600 text-white" : "bg-gray-200"
+                }`}
+              >
+                Scan QR
+              </button>
+            </div>
 
-      {message && <p className="text-red-500 mt-2">{message}</p>}
+            {/* ✅ Mode Saisie Manuelle */}
+            {mode === "manual" && (
+              <input
+                type="text"
+                value={codeRetrait}
+                onChange={(e) => setCodeRetrait(e.target.value)}
+                className="w-full border px-4 py-2 rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            )}
 
-      <div className="flex justify-end mt-4">
-        <button
-          onClick={() => {
-            setShowModal(false); // Fermer la modale
-            setCodeRetrait(""); // Réinitialiser le champ
-            setMessage(""); // Effacer le message
-          }}
-          className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
-        >
-          Annuler
-        </button>
+            {/* ✅ Mode Scan QR */}
+            {mode === "qr" && (
+              <div id="reader" className="w-full flex justify-center mt-4"></div>
+            )}
 
-        <button
-          onClick={() => { handleVerification();
-                            // setShowModal(false); 
-          }} // Vérification du code de retrait
-          className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ml-2"
-        >
-          Confirmer
-        </button>
-      </div>
-    </div>
-  </div>
-)}
+            {message && <p className="text-red-500 mt-2">{message}</p>}
 
+            <div className="flex justify-end mt-4">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setCodeRetrait("");
+                  setMessage("");
+                }}
+                className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+              >
+                Annuler
+              </button>
+
+              <button
+                onClick={handleVerification}
+                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ml-2"
+              >
+                Confirmer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </LayoutReceptionniste>
   );
 };

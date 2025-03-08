@@ -13,9 +13,35 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
+use App\Models\Structure;
+
 
 class NouveauLavageController extends Controller
 {
+    public function nouveauLavage()
+{
+    // ✅ Vérifier si un acteur (réceptionniste) est connecté
+    $acteur = Auth::guard('web')->user(); // 'web' correspond au guard des acteurs
+
+    if (!$acteur) {
+        return redirect()->route('acteurs.login')->withErrors('Aucun acteur connecté.');
+    }
+
+    // ✅ Récupérer l'ID de la structure de l'acteur connecté
+    $structureId = $acteur->structure_id;
+
+    // ✅ Sélectionner les clients, catégories et types liés à cette structure
+    $clients = Client::where('structure_id', $structureId)->get();
+    $categories = Categorie::where('structure_id', $structureId)->get();
+    $types = Type::where('structure_id', $structureId)->get();
+
+    // ✅ Envoyer les données au frontend via Inertia
+    return Inertia::render('NouveauLavage', [
+        'clients' => $clients,
+        'categories' => $categories,
+        'types' => $types,
+    ]);
+}
     public function create()
     {
         // Récupérer les données nécessaires depuis la base de données
@@ -54,7 +80,7 @@ class NouveauLavageController extends Controller
         $lavage = Lavage::create([
             'client_id' => $validated['client_id'],
             'code_retrait' => $codeRetrait,
-            // 'receptionniste_id' => Auth::id(), // ID du réceptionniste authentifié
+            'receptionniste_id' => Auth::guard('web')->id(), // ID du réceptionniste authentifié
         ]);
 
     Log::info('Lavage enregistré avec code de retrait :', ['id' => $lavage->id, 'code' => $lavage->code_retrait]);
@@ -82,16 +108,37 @@ class NouveauLavageController extends Controller
 
 
 
-public function showLastLavage()
-{
-    $lavage = Lavage::with(['client', 'vetements.categorie', 'vetements.type'])
-        ->orderBy('created_at', 'desc')
-        ->first();
-
-    return inertia('Facture', [
-        'lavage' => $lavage,
-    ]);
-}
+  
+    
+    public function showLastLavage()
+    {
+        // ✅ Récupérer l'acteur connecté
+        $acteur = Auth::guard('web')->user();
+    
+        if (!$acteur) {
+            return redirect()->route('acteurs.login')->with('error', 'Veuillez vous connecter.');
+        }
+    
+        // ✅ Récupérer la structure liée à l'acteur connecté
+        $structure = Structure::where('id', $acteur->structure_id)->first();
+    
+        // ✅ Récupérer le dernier lavage avec relations
+        $lavage = Lavage::with(['client', 'vetements.categorie', 'vetements.type'])
+            ->orderBy('created_at', 'desc')
+            ->first();
+    
+        return inertia('Facture', [
+            'lavage' => $lavage,
+            'acteur' => $acteur,
+            'structure' => $structure ? [
+                'nom_structure' => $structure->nom_structure,
+                'telephone' => $structure->telephone,
+                'ville' => $structure->ville,
+                'email' => $structure->email,
+            ] : null, // ✅ Retourne `null` si aucune structure n'est trouvée
+        ]);
+    }
+    
 
 public function dernierLavage()
     {

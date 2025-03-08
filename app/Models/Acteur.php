@@ -19,6 +19,7 @@ class Acteur extends Authenticatable
         'telephone',
         'password',
         'role',
+        'structure_id', // ✅ Assurez-vous que c'est bien présent ici
     ];
 
     // Si vous avez des colonnes cachées, ajoutez-les ici
@@ -26,4 +27,10 @@ class Acteur extends Authenticatable
         'password',
         'remember_token',
     ];
+
+    public function structure()
+{
+    return $this->belongsTo(Structure::class);
+}
+
 }

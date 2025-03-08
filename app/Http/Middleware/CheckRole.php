@@ -8,17 +8,15 @@ use Illuminate\Support\Facades\Auth;
 
 class CheckRole
 {
-    public function handle(Request $request, Closure $next, ...$roles)
+    public function handle(Request $request, Closure $next, $guard = null)
     {
-        // Vérifie si l'utilisateur est authentifié
-        if (!Auth::check()) {
-            return redirect('/')->withErrors(['error' => 'Vous devez être connecté.']);
-        }
-
-        // Vérifie si l'utilisateur a l'un des rôles autorisés
-        $user = Auth::user();
-        if (!in_array($user->role, $roles)) {
-            return redirect('/unauthorized')->withErrors(['error' => 'Accès non autorisé.']);
+        // 🔍 Vérifie si l'utilisateur est authentifié
+        if (!Auth::guard($guard)->check()) {
+            // 🎯 Déterminer la redirection en fonction du guard
+            if ($guard === 'structure') {
+                return redirect('/structure/login'); // Rediriger vers login structures
+            }
+            return redirect('/'); // Rediriger vers login acteurs
         }
 
         return $next($request);

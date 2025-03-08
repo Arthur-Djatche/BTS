@@ -10,11 +10,18 @@ class CreateVetementsTable extends Migration
     {
         Schema::create('vetements', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('categorie_id')->constrained()->onDelete('cascade');
-            $table->foreignId('type_id')->constrained()->onDelete('cascade');
+            
             $table->foreignId('lavage_id')->constrained()->onDelete('cascade');
             $table->foreignId('client_id')->constrained()->onDelete('cascade');
             $table->string('couleur'); // Code couleur ex: #ffffff
+
+            $table->foreignId('laveur_id')->nullable()->constrained('acteurs')->onDelete('set null'); // ✅ Peut être NULL si non obligatoire
+            $table->foreignId('repasseur_id')->nullable()->constrained('acteurs')->onDelete('set null'); // ✅ Peut être NULL si non obligatoire
+
+          
+
+            $table->enum('etat', ['Initial', 'En lavage', 'En repassage', 'Terminé','Retiré'])
+                  ->default('Initial'); // Ajoute après la colonne 'couleur'
             $table->timestamps();
         });
     }

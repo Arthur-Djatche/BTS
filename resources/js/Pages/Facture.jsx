@@ -1,132 +1,129 @@
-import React, { useState, useEffect } from "react";
-import Barcode from "react-barcode"; // Pour générer les codes-barres
-import QRCode from "react-qr-code"; // 📌 Utiliser "react-qr-code" à la place
-import { usePage} from "@inertiajs/react"; // Pour accéder aux données envoyées par le backend via Inertia
+import React from "react";
+import QRCode from "react-qr-code";
+import { usePage } from "@inertiajs/react";
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
 import Layout from "@/Layouts/Layout";
-import { Inertia } from '@inertiajs/inertia';
+import { Inertia } from "@inertiajs/inertia";
 
 const Facture = () => {
-const { lavage } = usePage().props; // Récupération des données injectées par Inertia
-  
-
+  const { lavage, structure, acteur } = usePage().props;
 
   const handlePrintAndUpdate = () => {
-    // Étape 1 : Récupérer tous les vêtements du dernier lavage
-    // Utilisez Inertia pour effectuer une requête vers une route qui retourne les vêtements du dernier lavage
-    
-        // Étape 2 : Mettre à jour l'état des vêtements à "En lavage"ek
-        vetements.forEach((vetement) => {
-          Inertia.patch(`/vetements/${vetement.id}/update-etat`, {
-            etat: "En lavage",
-          });
-        });
-  
-        // Étape 3 : Imprimer la facture
-        window.print();
+    lavage.vetements.forEach((vetement) => {
+      Inertia.patch(`/vetements/${vetement.id}/update-etat`, {
+        etat: "En lavage",
+      });
+    });
+    window.print();
+    Inertia.visit(`/receptionniste/nouveau-lavage`);
   };
 
-
-  // Stocke les données du dernier lavage
-  
-
-  // Fonction pour formater la date au format lisible
   const formatDate = (dateString) => {
     const options = { year: "numeric", month: "long", day: "numeric" };
     return new Date(dateString).toLocaleDateString(undefined, options);
   };
 
-  // Si les données du lavage ne sont pas encore disponibles, afficher un message de chargement
   if (!lavage) {
     return <p>Chargement...</p>;
   }
 
-  // Extraction des informations du lavage
-  const { id, client, vetements, created_at } = lavage;
+  const { id, client, vetements, created_at, code_retrait } = lavage;
 
   return (
-    <LayoutReceptionniste>
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        {/* Partie supérieure de la facture */}
-        <div className="border-b-2 border-dashed pb-4 mb-4">
-          <h1 className="text-2xl font-bold text-blue-600 mb-4">Facture</h1>
-          {/* Date du lavage */}
-          <p className="text-blue-600">
-            <strong>Date :</strong> {formatDate(created_at)}
-          </p>
-          {/* Informations du client */}
-          <p className="text-blue-600">
-            <strong>Client :</strong> {client.nom} ({client.email})
-          </p>
-          {/* Nombre total de vêtements */}
-          <p className="text-blue-600">
-            <strong>Nombre de vêtements :</strong> {vetements.length}
-          </p>
-          <p className="text-blue-600" > 
-            <strong >Code de retrait :{lavage.code_retrait}</strong>
-          </p>
-          {/* ID du lavage avec un code-barres */}
-          <p className="text-blue-600">
-            <strong>ID Lavage :</strong> {id}
-          </p>
-          <div className="mt-2">
-            {/* Génération du code-barres pour l'ID du lavage */}
-            <QRCode value={id.toString()} size={100} />
+    <LayoutReceptionniste className="print:hidden">
+ 
+ <div className="p-6 bg-white rounded-lg shadow-md max-w-2xl mx-auto print:max-w-full border">
+      {/* Logo et Infos Structure */}
+      <div className="text-center mb-4">
+        <div className="flex justify-center mb-2">
+          {/* Espace pour le logo */}
+          <div className="w-20 h-20 bg-gray-200 flex items-center justify-center rounded-full">
+            <span className="text-gray-500 text-xs">LOGO</span>
           </div>
         </div>
+        <h2 className="text-lg font-bold text-gray-700">{structure.nom_structure}</h2>
+        <p className="text-sm text-gray-600">{structure.ville} - {structure.telephone}</p>
+        <p className="text-sm text-gray-600">{structure.email}</p>
+      </div>
 
-        {/* Partie inférieure : Liste des vêtements */}
-        <div>
-          <h2 className="text-xl font-bold text-blue-600 mb-4">
-            Détail des vêtements
-          </h2>
-          <table className="w-full text-left border-collapse border border-blue-300 mb-4">
-            <thead>
-              <tr>
-                <th className="border border-blue-300 px-4 py-2">Catégorie</th>
-                <th className="border border-blue-300 px-4 py-2">Type</th>
-                <th className="border border-blue-300 px-4 py-2">Couleur</th>
-                <th className="border border-blue-300 px-4 py-2">Code-barres</th>
-              </tr>
-            </thead>
-            <tbody>
-              {vetements.map((vetement) => (
-                <tr key={vetement.id}>
-                  {/* Catégorie du vêtement */}
-                  <td className="border border-blue-300 px-4 py-2">
-                    {vetement.categorie.nom}
-                  </td>
-                  {/* Type du vêtement */}
-                  <td className="border border-blue-300 px-4 py-2">
-                    {vetement.type.nom}
-                  </td>
-                  {/* Couleur du vêtement */}
-                  <td className="border border-blue-300 px-4 py-2">
-                    <div
-                      className="w-6 h-6 rounded-full"
-                      style={{ backgroundColor: vetement.couleur }}
-                    ></div>
-                  </td>
-                  {/* Code-barres généré pour l'ID du vêtement */}
-                  <td className="border border-blue-300 px-4 py-2">
-                    <QRCode value={vetement.id.toString()} size={80} />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* Détails de la Facture */}
+      <div className="border-b border-dashed pt-4">
+        <h1 className="text-xl font-bold text-blue-600 text-center mb-2">FACTURE</h1>
+        
+        {/* Informations Client & Lavage + QR Code en ligne */}
+<div className="flex justify-between items-center text-sm text-gray-700 mt-4 mb-8">
+  {/* Infos Client & Lavage (à gauche) */}
+  <div>
+    <p><span className="font-semibold">Date :</span> {formatDate(lavage.created_at)}</p>
+    <p>
+      <span className="font-semibold">Client :</span> {lavage.client.nom} {lavage.client.prenom} 
+      <br /> ({lavage.client.email})
+    </p>
+    <p><span className="font-semibold">No Lavage :</span> {lavage.id}</p>
+    <p><span className="font-semibold">Nombre de vêtements :</span> {lavage.vetements.length}</p>
+    <p><span className="font-semibold"> Receptionné par:</span> {acteur.nom} {acteur.prenom}</p>
+  </div>
+  
+
+  {/* QR Code (à droite) */}
+  <div className="ml-4">
+    <QRCode value={lavage.code_retrait.toString()} size={90} />
+  </div>
+</div>
+      </div>
+    
+
+        <h2 className="text-lg font-bold text-blue-600 mb-2 text-center">Détail des vêtements</h2>
+        <table className="w-full text-left border-collapse border border-gray-300 text-sm">
+  <thead>
+    <tr>
+      <th className="border px-2 py-1">Catégorie</th>
+      <th className="border px-2 py-1">Type</th>
+      <th className="border px-2 py-1">Couleur</th>
+      <th className="border px-2 py-1">QR Code</th>
+    </tr>
+  </thead>
+  <tbody>
+    {vetements.map((vetement, index) => (
+      <tr key={vetement.id}>
+        <td className="border px-2 py-1">{vetement.categorie.nom}</td>
+        <td className="border px-2 py-1">{vetement.type.nom}</td>
+        <td className="border px-2 py-1">
+          <div
+            className="w-4 h-4 rounded-full mx-auto"
+            style={{ backgroundColor: vetement.couleur }}
+          ></div>
+        </td>
+        <td className="border px-2 py-1 text-center">
+          <div className="border-2 border-dashed p-2 inline-block rounded-lg">
+            {/* QR Code unique pour chaque vêtement */}
+            <QRCode value={vetement.id.toString()} size={50} />
+
+            {/* Numéro du vêtement dans l'ordre - ID du lavage */}
+            <p className="mt-2 font-semibold text-gray-700">
+              {index + 1}/{lavage.vetements.length}-{lavage.id}
+            </p>
+          </div>
+        </td>
+      </tr>
+    ))}
+  </tbody>
+</table>
+
+
+        {/* Bouton masqué lors de l'impression */}
+        <div className="mt-4 print:hidden text-center">
+          <button
+            onClick={handlePrintAndUpdate}
+            className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
+          >
+            Imprimer et Mettre à Jour
+          </button>
         </div>
-
-        {/* Bouton pour imprimer la facture */}
-        <button
-         onClick={handlePrintAndUpdate}
-         className="mt-6 bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
-  >
-    Imprimer et Mettre à Jour
-  </button>   
       </div>
     </LayoutReceptionniste>
   );
 };
+
 Facture.layout = (page) => <Layout children={page} />;
 export default Facture;

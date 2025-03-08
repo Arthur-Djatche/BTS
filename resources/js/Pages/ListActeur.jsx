@@ -2,6 +2,8 @@ import React, { useState, useEffect } from "react";
 import { FaEdit, FaTrash, FaSync } from "react-icons/fa";
 import { usePage } from "@inertiajs/react";
 import { Inertia } from "@inertiajs/inertia";
+import LayoutAdmin from "@/Layouts/LayoutAdmin";
+import Layout from "@/Layouts/Layout";
 
 function ListActeur() {
   const { acteurs } = usePage().props; // Récupérer les acteurs depuis les props d'Inertia
@@ -67,10 +69,11 @@ function ListActeur() {
   };
 
   if (!localActeurs || localActeurs.length === 0) {
-    return <p className="text-center mt-6">Aucun acteur trouvé.</p>;
+    return <LayoutAdmin><p className="text-center mt-6">Aucun Employé trouvé.</p></LayoutAdmin>;
   }
 
   return (
+    <LayoutAdmin>
     <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Liste des Acteurs</h2>
       
@@ -142,7 +145,10 @@ function ListActeur() {
         </table>
       </div>
     </div>
+    </LayoutAdmin>
   );
 }
 
+
+ListActeur.layout = (page) => <Layout children={page} />;
 export default ListActeur;

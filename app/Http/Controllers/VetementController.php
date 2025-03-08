@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 use App\Models\Vetement;
 use App\Models\Lavage;
+use App\Models\Emplacement;
 
 
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class VetementController extends Controller
  
 public function updateEtat(Request $request, $id)
 {
+
     // Validation des données
     $validated = $request->validate([
         'etat' => 'required|in:En lavage,En repassage,Terminé,Retiré',
@@ -33,10 +35,10 @@ public function updateEtat(Request $request, $id)
 
     // Mettre à jour l'état du vêtement et associer l'acteur correspondant
     if ($validated['etat'] === 'En repassage') {
-        $vetement->laveur_id = Auth::id(); // ID du laveur authentifié
+        $vetement->laveur_id = Auth::guard('web')->id(); // ID du laveur authentifié
     } elseif ($validated['etat'] === 'Terminé') {
-        $vetement->repasseur_id = Auth::id(); // ID du repasseur authentifié
-     }  
+        $vetement->repasseur_id = Auth::guard('web')->id(); // ID du repasseur authentifié
+    }
 
     $vetement->etat = $validated['etat'];
     $vetement->save(); // Sauvegarder les modifications
@@ -64,18 +66,75 @@ public function updateEtat(Request $request, $id)
 
 public function indexLavage()
 {
-    $vetements = Vetement::where('etat', 'En lavage')->with('categorie', 'type')->get();
+    // Récupérer l'utilisateur connecté (acteur)
+    $acteur = Auth::guard('web')->user();
+
+    // Vérifier qu'un acteur est bien connecté
+    if (!$acteur) {
+        return redirect()->route('acteurs.login'); // Redirection si non connecté
+    }
+
+
+
+    // Récupérer la structure associée à l'acteur connecté
+    $structureId = $acteur->structure_id;
+
+    // Récupérer les vêtements des lavages liés à cette structure
+    $vetements = Vetement::whereHas('lavage', function ($query) use ($structureId) {
+        $query->whereHas('receptionniste', function ($subQuery) use ($structureId) {
+            $subQuery->where('structure_id', $structureId);
+        });
+    })
+    ->where('etat', 'En lavage')
+    ->with(['categorie', 'type', 'lavage'])
+    ->get();
 
     return inertia('TacheLavages', [
         'vetements' => $vetements,
     ]);
 }
+
 public function indexRepassage()
 {
-    $vetements = Vetement::where('etat', 'En repassage')->with('categorie', 'type')->get();
+    // Récupérer l'utilisateur connecté (acteur)
+    $acteur = Auth::guard('web')->user();
+
+    // Vérifier qu'un acteur est bien connecté
+    if (!$acteur) {
+        return redirect()->route('acteurs.login'); // Redirection si non connecté
+    }
+
+    // Récupérer la structure associée à l'acteur connecté
+    $structureId = $acteur->structure_id;
+
+    // Récupérer les vêtements des lavages liés à cette structure
+    $vetements = Vetement::whereHas('lavage', function ($query) use ($structureId) {
+        $query->whereHas('receptionniste', function ($subQuery) use ($structureId) {
+            $subQuery->where('structure_id', $structureId);
+        });
+    })
+    ->where('etat', 'En repassage')
+    ->with(['categorie', 'type', 'lavage'])
+    ->get();
+
+      // Récupérer les lavages dont tous les vêtements sont terminés
+    $lavagesTermines = Lavage::whereDoesntHave('vetements', function ($query) {
+        $query->where('etat', '!=', 'Terminé');
+    }) // Vérifie que tous les vêtements sont terminés
+    ->whereNull('emplacement_id') // Vérifie que l'emplacement_id est NULL
+    ->whereHas('receptionniste', function ($subQuery) use ($structureId) {
+        $subQuery->where('structure_id', $structureId);
+    })
+    ->get();
+
+    // Récupérer les emplacements liés à la structure
+    $emplacements = Emplacement::where('structure_id', $structureId)->get();
+   
 
     return inertia('TacheRepassage', [
         'vetements' => $vetements,
+        'emplacements' => $emplacements, // Envoi des emplacements à la page
+        'lavagesTermines' => $lavagesTermines,
     ]);
 }
 

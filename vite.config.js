@@ -10,6 +10,9 @@ export default defineConfig({
         }),
         react(),
     ],
+    server: {
+        port: 5173, // Ajoute le port pour éviter les conflits
+    },
 
     build: {
         rollupOptions: {

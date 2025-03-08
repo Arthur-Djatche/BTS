@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from '@inertiajs/react';
 import ErrorPopup from './ErrorPage';
+import LayoutAdmin from '@/Layouts/LayoutAdmin';
+import Layout from '@/Layouts/Layout';
 
 function AjoutActeur() {
 
@@ -39,6 +41,7 @@ function AjoutActeur() {
   }
 
   return (
+    <LayoutAdmin>
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="w-full max-w-md bg-white rounded-lg shadow-lg p-6">
         <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">Ajouter un Acteur</h2>
@@ -81,7 +84,8 @@ function AjoutActeur() {
         </form>
       </div>
     </div>
+    </LayoutAdmin>
   );
 }
-
+AjoutActeur.layout = (page) => <Layout children={page}/>
 export default AjoutActeur;

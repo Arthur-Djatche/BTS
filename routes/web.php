@@ -13,6 +13,17 @@ use App\Http\Controllers\NouveauLavageController;
 use App\Http\Controllers\LavageController;
 use App\Http\Controllers\VetementController;
 use App\Http\Controllers\FactureController;
+use App\Http\Controllers\StructureController;
+
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\TypeController;
+use App\Http\Middleware\ProtectMiddleware;
+
+
+Route::get('/login/structure', [AuthController::class, 'showStructureLogin'])->name('structure.login');
+Route::get('/login/acteurs', [AuthController::class, 'showActeursLogin'])->name('acteurs.login');
+
+
 
 Route::get('/', function () {
     return Inertia::render('Login');
@@ -22,9 +33,7 @@ Route::post('/', [AuthController::class, 'login']);
 
 
 
-Route::middleware(['Checkrole'])->group(function (){
 
-});
     
 Route::get('/Laveur', function () {
     return Inertia::render('DashboardLaveur');
@@ -41,7 +50,7 @@ Route::get('/repasseur/taches', [VetementController::class,'indexRepassage']);
 
 Route::get('/Receptionniste', function () {
     return Inertia::render('DashboardReceptionniste');
-})->name('Receptionniste')->middleware('role:receptionniste');
+})->name('Receptionniste');
 
 Route::get('/Inscription', function () {
     return Inertia::render('Register');
@@ -52,14 +61,14 @@ Route::post('/Inscription', [ActeurController::class, 'store']);
 
 
 
-Route::get('/Admin', function () {
-    return Inertia::render('Admin');
-})-> name('Admin')->middleware('role:admin');
+
+
+
 
 Route::post('/Admin', [ActeurController::class, 'handleRequest']);
 
 
-Route::get('/Admin/Emp/list', [ActeurController::class, 'index', 'indexx'])->name('admin.list');
+Route::get('/Admin/Emp/list', [ActeurController::class, 'index'])->name('admin.list');
 
 // Route::get('/Admin/Emp/list', function () {
 //     return Inertia::render('Admin');
@@ -67,9 +76,14 @@ Route::get('/Admin/Emp/list', [ActeurController::class, 'index', 'indexx'])->nam
 
 Route::delete('/Admin/Emp/list/{id}', [ActeurController::class, 'destroy']);
 
-Route::get('/Admin/Emp/Ajout', function () {
-    return Inertia::render('Admin');
+
+
+Route::middleware('auth')->group(function () {
+    Route::get('/Admin/Emp/Ajout', function () {
+    return Inertia::render('AjoutActeur');
 })-> name('AdminEmp');
+});
+
 
 Route::get('/Admin/Emp', function () {
     return Inertia::render('Admin');
@@ -90,27 +104,25 @@ Route::get('/AjoutClient', function () {
 // });
 
 
-
-Route::get('receptionniste/nouveau-lavage', function () {
-    return Inertia::render('NouveauLavage', [
-        'clients' => \App\Models\Client::all(),
-        'categories' => \App\Models\Categorie::all(),
-        'types' => \App\Models\Type::all(),
-    ]);
-});
-
+// Route::middleware(['auth:web', ProtectMiddleware::class . ':receptionniste'])->group(function () {
+Route::get('receptionniste/nouveau-lavage', [NouveauLavageController::class, 'nouveauLavage']); // Assure que seul un acteur connecté peut accéder à la page
+Route::get('lavages/termines', [LavageController::class, 'getLavagesTermines']); // Assure que seul un acteur connecté peut accéder à la page
 Route::post('/receptionniste/nouveau-lavage',[NouveauLavageController::class, 'store']);
-
-Route::get('/receptionniste/etat-lavage', function(){
-    return Inertia::render('EtatLavage');
+Route::get('/receptionniste/acceuil', function(){
+    return Inertia::render('DashboardReceptionniste');
 });
+// });
+
+
+
+// Route::get('/receptionniste/etat-lavage', function(){
+//     return Inertia::render('EtatLavage');
+// });
 // Route::get('/receptionniste/facture', function(){
 //     return Inertia::render('Facture');
 // });
 
-Route::get('/receptionniste/acceuil', function(){
-    return Inertia::render('DashboardReceptionniste');
-});
+
 Route::get('/unauthorized', function(){
     return Inertia::render('unauthorized');
 });
@@ -145,4 +157,61 @@ Route::get('/receptionniste/factures/{id}', [FactureController::class, 'show'])-
         dd(request()->header('X-Inertia'));
     });
 
-Route::post('receptionniste/verifier-retrait', [LavageController::class, 'verifierCodeRetrait']);
+    Route::post('receptionniste/verifier-retrait', [LavageController::class, 'verifierCodeRetrait']);
+
+Route::get('/scan', function(){
+    return Inertia::render('Scan');
+});
+Route::get('/bienvenue', function(){
+    return Inertia::render('Bienvenue');
+});
+Route::get('/structures', function(){
+    return Inertia::render('CreateStructure');
+});
+
+Route::post('/structures', [StructureController::class, 'store']);
+
+Route::get('/structures/login', function(){
+    return Inertia::render('LoginStructure');
+})->name('login');
+
+
+
+Route::post('/structures/login', [StructureController::class, 'login']);
+
+
+
+
+Route::middleware(['auth:structure', ProtectMiddleware::class . ':structure'])->group(function () {
+    Route::get('/categories', [CategoryController::class, 'index']);
+    Route::post('/categories', [CategoryController::class, 'store']);
+    Route::put('/categories/{id}', [CategoryController::class, 'update']);
+    Route::delete('/categories/{id}', [CategoryController::class, 'destroy']);
+        Route::get('/Admin', function () {
+    return Inertia::render('Admin');
+})-> name('Admin');
+});
+Route::middleware(['auth:structure'])->group(function () {
+    Route::get('/types', [TypeController::class, 'index']);
+    Route::post('/types', [TypeController::class, 'store']);
+    Route::put('/types/{id}', [TypeController::class, 'update']);
+    Route::delete('/types/{id}', [TypeController::class, 'destroy']);
+});
+
+Route::middleware('auth:web')->group(function () {
+    
+});
+
+Route::patch('/lavages/{id}/update-emplacement', [LavageController::class, 'updateEmplacement']);
+
+// use App\Http\Controllers\RepassageController;
+
+// Route::middleware(['auth:web'])->group(function () {
+//     Route::get('/tache-repassage', [RepassageController::class, 'indexRepassage'])->name('tache.repassage');
+//     Route::patch('/vetements/{vetement}/update-etat', [RepassageController::class, 'updateEtat']);
+//     Route::patch('/lavages/{lavage}/update-emplacement', [RepassageController::class, 'updateEmplacement']);
+// });
+
+
+
+  

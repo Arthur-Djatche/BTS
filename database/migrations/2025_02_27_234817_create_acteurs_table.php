@@ -15,15 +15,16 @@ class CreateActeursTable extends Migration
     {
         Schema::create('acteurs', function (Blueprint $table) {
             $table->id(); // Clé primaire
-            $table->string('nom'); // Champ nom
-            $table->string('prenom'); // Champ prénom
+            $table->string('nom')->nullable();; // Champ nom
+            $table->string('prenom')->nullable();; // Champ prénom
             $table->string('email')->unique(); // Email unique
             $table->string('telephone')->nullable(); // Téléphone optionnel
             $table->string('password'); // Mot de passe
+            $table->rememberToken();
             // Ajouter une colonne 'role' avec une valeur par défaut 'laveur'
             $table->enum('role', ['admin', 'receptionniste', 'laveur', 'repasseur'])
+            
                   ->default('laveur');
-                  $table->rememberToken();
             $table->timestamps(); // created_at et updated_at
         });
     }

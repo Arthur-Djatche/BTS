@@ -15,7 +15,7 @@ createInertiaApp({
         console.log("📄 Page demandée par Inertia :", name);
         return resolvePageComponent(
             `./Pages/${name}.jsx`,
-            import.meta.glob('./Pages/**/*.jsx')
+            import.meta.glob('./Pages/**/*.jsx', {eager: true})
         );
     },
     setup({ el, App, props }) {

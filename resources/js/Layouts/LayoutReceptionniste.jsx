@@ -12,7 +12,7 @@ function LayoutReceptionniste({ children }) {
 
       {/* Menu burger pour mobile */}
       <button
-        className="md:hidden p-4 text-blue-600"
+        className="md:hidden p-4 text-blue-600 print:hidden"
         onClick={() => setSidebarOpen(!isSidebarOpen)}
       >
         <svg
@@ -27,7 +27,7 @@ function LayoutReceptionniste({ children }) {
       </button>
       
       {/* Menu latéral */}
-      <aside className={`fixed md:static z-50 top-0 left-0 w-80 bg-blue-600 text-white flex flex-col p-6 transform ${
+      <aside className={`print:hidden fixed md:static z-50 top-0 left-0 w-80 bg-blue-600 text-white flex flex-col p-6 transform ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0 transition-transform duration-200 ease-in-out`}>
         {/* En-tête du menu */}
@@ -59,17 +59,6 @@ function LayoutReceptionniste({ children }) {
           >
             Nouveau Lavage
           </Link>
-          {/* <Link
-                      href="/receptionniste/etat-lavage"
-                      className={`px-4 py-3 text-left rounded-md mx-2 my-1 ${
-                        url === "/receptionniste/etat-lavage"
-                          ? "bg-blue-500 text-white" // Style pour l'élément actif
-                          : "text-wh hover:bg-blue-500" // Style par défaut avec effet hover
-                      }`}
-                    >
-                      Imprimer Factures
-                    </Link> */}
-          {/* Lien vers la page "État Lavage" */}
           <Link
             href="/receptionniste/etat-lavage"
             className={`px-4 py-3 text-left rounded-md mx-2 my-1 ${
@@ -86,7 +75,7 @@ function LayoutReceptionniste({ children }) {
     
 
       {/* Zone de contenu principal */}
-      <main className="flex-1 p-6 bg-gray-50">
+      <main className="flex-1 p-6 bg-gray-50" style={{ height: "auto" }} >
         {children} {/* Contenu dynamique (dépend de la page active) */}
       </main>
     </div>
