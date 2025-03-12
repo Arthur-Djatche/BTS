@@ -11,7 +11,7 @@ class CategoryController extends Controller
     public function index()
     {
         $structure = Auth::guard('structure')->user(); // Récupère la structure connectée
-        $categories = Categorie::where('structure_id', $structure->id)->get();
+        $categories = Categorie::where('structure_id', $structure->id)->where('actif', 'O')->get();
 
         return inertia('Categories', [
             'categories' => $categories,
@@ -55,8 +55,8 @@ class CategoryController extends Controller
     public function destroy($id)
     {
         $category = Categorie::findOrFail($id);
-        $category->delete();
+        $category->update(['actif' => 'N']); // ⚠️ Met à jour au lieu de supprimer
 
-        return redirect()->back();
+        return redirect()->back()->with('success', 'Emplacement désactivé avec succès.');
     }
 }

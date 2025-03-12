@@ -104,18 +104,26 @@ public function verifierCodeRetrait(Request $request)
         'code_retrait' => 'required|string',
     ]);
 
-    $lavage = Lavage::find($validated['lavage_id']);
+    $lavage = Lavage::with(['client', 'emplacement'])->find($validated['lavage_id']);
 
     if (!$lavage) {
         return response()->json(['valid' => false, 'message' => "Lavage introuvable."], 404);
     }
 
     if (strtolower(trim($lavage->code_retrait)) === strtolower(trim($validated['code_retrait']))) {
-        return response()->json(['valid' => true]);
+        return response()->json([
+            'valid' => true,
+            'lavage' => [
+                'id' => $lavage->id,
+                'client' => [
+                    'nom' => $lavage->client->nom ?? 'Inconnu',
+                    'prenom' => $lavage->client->prenom ?? 'Inconnu'
+                ],
+                'emplacement' => ['nom' => $lavage->emplacement->nom ?? 'Non défini']
+            ]
+        ]);
     } else {
         return response()->json(['valid' => false, 'message' => "Code incorrect."], 200);
     }
 }
-
-
 }

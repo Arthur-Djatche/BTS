@@ -136,7 +136,7 @@ function LayoutAdmin({ children }) {
                 Types
               </Link>
               <Link
-                href="/Admin/fournisseur/Ajout"
+                href={route("emplacements")}
                 className={`block w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 ${
                   activeSubMenu === "emp" ? "bg-blue-500" : ""
                 }`}
@@ -146,6 +146,19 @@ function LayoutAdmin({ children }) {
               </Link>
             </div>
           )}
+
+          {/* Menu TRACAGE */}
+        <div className="mt-4">
+          <Link
+            href="/tracabilite"
+            className={`block w-full text-left py-2 px-4 rounded-md hover:bg-blue-500 ${
+              activeMenu === "tracabilite" ? "bg-blue-500" : ""
+            }`}
+            onClick={() => setActiveMenu("tracabilite")}
+          >
+            Tracer
+          </Link>
+        </div>
         </div>
       </div>
 

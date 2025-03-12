@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Redirect;
 
 class ActeurController extends Controller
 
@@ -87,44 +88,44 @@ class ActeurController extends Controller
 }
 
 
-    public function addActor(Request $request)
+public function addActor(Request $request)
 {
     // Vérifier si une structure est bien connectée
     if (!Auth::guard('structure')->check()) {
-        return response()->json(['error' => 'Aucune structure connectée.'], 403);
+        return Inertia::render('AjoutActeur', ['error' => 'Aucune structure connectée.']);
     }
 
-     // Récupérer l'ID de la structure connectée
-     $structureId = Auth::guard('structure')->id();
+    // Récupérer l'ID de la structure connectée
+    $structureId = Auth::guard('structure')->id();
 
+    // Validation des données
     $request->validate([
         'nom' => 'nullable|string|max:255',
         'prenom' => 'nullable|string|max:255',
         'email' => 'required|email',
         'password' => 'nullable|string|min:8',
         'role' => 'required|in:receptionniste,repasseur,laveur',
-        
     ]);
 
     $acteur = Acteur::where('email', $request->email)->first();
 
-    if(!$acteur){
+    if (!$acteur) {
+        // Création d'un nouvel acteur
+        Acteur::create([
+            'email' => $request->email,
+            'role' => $request->role,
+            'password' => bcrypt('default_password'), // Peut être une valeur par défaut
+            'nom' => $request->nom, // ?? 'Nom par défaut',
+            'prenom' => $request->prenom, // ?? 'Prénom par défaut',
+            'structure_id' => $structureId,
+        ]);
 
-    $acteur = Acteur::create([
-        'email' => $request->email,
-        'role' => $request->role,
-        'password' => bcrypt('default_password'), // Peut être une valeur par défaut
-        'nom' => $request->nom, // ?? 'Nom par défaut',
-        'prenom' => $request->prenom,  //?? 'Prenom par défaut',
-        'structure_id' => $structureId, // 🔥 On assigne la structure connectée
-       
+        return Inertia::render('AjoutActeur', ['success' => 'Acteur ajouté avec succès.']);
+    }
 
-    ]);
-        
-    return response()->json(['message' => 'Acteur ajouté avec succès.', 'acteur' => $acteur], 201);
+    return Inertia::render('AjoutActeur', ['error' => 'Cet email existe déjà.']);
 }
-    return response()->json(['message' => 'email existant', 'acteur' => $acteur], 201);
-}
+
 
 
 public function completeRegistration(Request $request)
@@ -163,7 +164,7 @@ public function index()
     }
 
     // ✅ Récupérer tous les acteurs appartenant à cette structure
-    $acteurs = Acteur::where('structure_id', $structure->id)->get();
+    $acteurs = Acteur::where('structure_id', $structure->id)->where('actif', 'O')->get();
 
     // ✅ Retourner les données au frontend via Inertia
     return Inertia::render('ListActeur', [
@@ -188,12 +189,55 @@ public function indexx(Request $request)
 public function destroy($id)
 {
     $acteur = Acteur::findOrFail($id);
-    $acteur->delete();
+    $acteur->update(['actif' => 'N']); // ⚠️ Met à jour au lieu de supprimer
 
     // return redirect()->back()->with('success', 'Acteur supprimé avec succès.');
 }
 
-    
+public function update(Request $request)
+{
+    Log::info('Données reçues pour mise à jour :', $request->all());
 
+    // Récupérer l'utilisateur connecté
+    $acteur = Auth::guard('web')->user();
+    Log::info("Type de l'objet acteur :", ['type' => get_class($acteur)]);
+
+    if (!$acteur) {
+        Log::error("Aucun acteur trouvé !");
+        return redirect()->route('acteurs.login')->with('error', "Vous devez être connecté.");
+    }
+
+    // Validation des données
+    $validated = $request->validate([
+        'nom' => 'nullable|string|max:255',
+        'prenom' => 'nullable|string|max:255',
+        'password' => 'nullable|string|min:8',
+    ]);
+
+    // Mise à jour des champs
+    $acteur->nom = $validated['nom'] ?? $acteur->nom;
+    $acteur->prenom = $validated['prenom'] ?? $acteur->prenom;
+
+    if (!empty($validated['password'])) {
+        $acteur->password = Hash::make($validated['password']);
+    }
+    /** @var \App\Models\Acteur $acteur */
+    $acteur->save(); // ✅ Sauvegarde
+
+    Log::info('Données mises à jour avec succès !', ['acteur' => $acteur]);
+
+    return Inertia::render('ProfilActeur', [
+        'acteur' => $acteur,
+        'success' => "Profil mis à jour avec succès !",
+    ]);
+}
+public function edit()
+{
+    $acteur = Auth::guard('web')->user(); // ✅ Récupérer l'acteur connecté
+
+    return Inertia::render('ProfilActeur', [
+        'acteur' => $acteur,
+    ]);
+}
 }
 

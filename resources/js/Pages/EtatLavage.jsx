@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react"; // Gestion des états locaux
 import { Inertia } from "@inertiajs/inertia"; // Gestion des requêtes avec Inertia.js
 import { usePage } from "@inertiajs/react"; // Récupération des données injectées via Inertia
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste"; // Layout personnalisé pour les réceptionnistes
-import Layout from "@/Layouts/Layout";
+// import Layout from "@/Layouts/Layout";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
@@ -36,9 +36,11 @@ const EtatLavage = ({lavages}) => {
   // Récupération des données injectées par Inertia (liste des lavages et autres informations)
   const [lavageIdSelectionne, setLavageIdSelectionne] = useState(null); // Stocker l'ID du lavage sélectionné
 const [showModal, setShowModal] = useState(false); // Contrôle l'affichage de la modale
+const [showSuccessModal, setShowSuccessModal] = useState(false); // ✅ Nouvelle modale de succès
 const [codeRetrait, setCodeRetrait] = useState(""); // Stocke le code de retrait saisi
 const [message, setMessage] = useState(""); // Message de succès ou d'erreur
 const [mode, setMode] = useState("manual"); // ✅ Mode actuel (manuel ou QR)
+const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les infos du lavage validé
 
 
 
@@ -65,12 +67,14 @@ const [mode, setMode] = useState("manual"); // ✅ Mode actuel (manuel ou QR)
   const handleRetirer = async (lavageId) => {
     try {
       await Inertia.post(`/lavages/${lavageId}/retirer`, null, {
+         preserveState: true, // ✅ Empêche le reset de la page
+      preserveScroll: true, // ✅ Empêche de remonter en haut de la page
         onSuccess: () => {
-          alert("Lavage retiré avec succès !");
+          toast.success("Lavage retiré avec succès !");
         },
         onError: (errors) => {
           console.error(errors);
-          alert("Une erreur s'est produite lors de la mise à jour.");
+          toast.error("Une erreur s'est produite lors du retrait.");
         },
       });
     } catch (error) {
@@ -86,36 +90,37 @@ const [mode, setMode] = useState("manual"); // ✅ Mode actuel (manuel ou QR)
   
   };
 
-  const verifierCodeRetrait = () => {
-    if (!lavageIdSelectionne) {
-      toast.warn("⚠️ Veuillez entrer un code de retrait.", { position: "top-right" });
+  const verifierCodeRetrait = async (e) => {
+      e.preventDefault();
+
+    if (!lavageIdSelectionne || !codeRetrait) {
+      toast.warn("Veuillez entrer un code de retrait.");
       return;
     }
-  
-    if (!codeRetrait) {
-      toast.warn("⚠️ Veuillez entrer un code de retrait.", { position: "top-right" });
-      return;
+
+    try {
+      const response = await axios.post("/receptionniste/verifier-retrait", {
+        lavage_id: lavageIdSelectionne,
+        code_retrait: codeRetrait,
+      });
+
+      if (response.data.valid) {
+        
+        setLavageDetails(response.data.lavage); 
+        setShowSuccessModal(true); // ✅ Afficher la seconde modale
+        toast.success("✅ Code correct !");
+        setShowModal(false);
+      
+
+        // ✅ Mettre à jour les détails du lavage
+       
+      } else {
+        toast.error("❌ " + response.data.message);
+      }
+    } catch (error) {
+      console.error("🚨 Erreur API :", error);
+      toast.error("Erreur lors de la vérification.");
     }
-  
-    // Envoyer les données au backend pour vérification
-    Inertia.post("/receptionniste/verifier-retrait", {
-      lavage_id: lavageIdSelectionne,
-      code_retrait: codeRetrait,
-    }, {
-      onSuccess: (page) => {
-        const result = page.props.valid;
-        if (result) {
-            toast.success("Code correct, retrait en cours...");
-            closeModal();
-            handleRetirer(selectedLavageId); // ✅ Appel de la fonction de retrait
-        } else {
-            toast.error("Code incorrect, veuillez réessayer !");
-        }
-    },
-    onError: () => {
-        toast.error("Erreur lors de la vérification !");
-    }
-    });
   };
   
   const handleVerification = async () => {
@@ -305,7 +310,7 @@ const [mode, setMode] = useState("manual"); // ✅ Mode actuel (manuel ou QR)
               </button>
 
               <button
-                onClick={handleVerification}
+                onClick={verifierCodeRetrait}
                 className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ml-2"
               >
                 Confirmer
@@ -314,10 +319,71 @@ const [mode, setMode] = useState("manual"); // ✅ Mode actuel (manuel ou QR)
           </div>
         </div>
       )}
+
+     {/* ✅ Seconde Modale : Détails du Lavage */}
+{showSuccessModal && lavageDetails && (
+  <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
+    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all">
+      {/* ✅ En-tête de succès */}
+      <div className="flex flex-col items-center">
+        <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center text-3xl">
+          ✅
+        </div>
+        <h2 className="text-2xl font-bold text-green-600 mt-4">
+          Retrait Confirmé !
+        </h2>
+        <p className="text-gray-600 text-center">
+          Le retrait du lavage a été validé avec succès.
+        </p>
+      </div>
+
+      {/* ✅ Détails du lavage */}
+      <div className="mt-6 border-t border-gray-300 pt-4 space-y-4">
+        {/* ID Lavage */}
+        <div className="flex items-center">
+          <span className="text-blue-600 text-xl mr-2">🆔</span>
+          <p className="text-lg">
+            <strong>ID Lavage :</strong> {lavageDetails.id}
+          </p>
+        </div>
+
+        {/* Nom Client */}
+        <div className="flex items-center">
+          <span className="text-blue-600 text-xl mr-2">👤</span>
+          <p className="text-lg">
+            <strong>Client :</strong> {lavageDetails.client.nom} {lavageDetails.client.prenom}
+          </p>
+        </div>
+
+        {/* Emplacement mis en avant */}
+        <div className="flex items-center bg-blue-100 p-3 rounded-lg shadow-md">
+          <span className="text-blue-700 text-2xl mr-3">📍</span>
+          <p className="text-lg text-blue-700 font-semibold">
+            Emplacement : {lavageDetails.emplacement.nom}
+          </p>
+        </div>
+      </div>
+
+      {/* ✅ Bouton de fermeture */}
+      <div className="mt-6 flex justify-center">
+        <button
+          onClick={() => {
+            setShowSuccessModal(false); // Fermer la modale
+            handleRetirer(lavageIdSelectionne); // ✅ Exécuter le retrait après la fermeture
+          }}
+          className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+        >
+          Fermer
+        </button>
+      </div>
+    </div>
+  </div>
+)}
+
     </LayoutReceptionniste>
   );
 };
-EtatLavage.layout = (page) => <Layout children={page} />;
+// EtatLavage.layout = (page) => <Layout children={page} />;
 
 
 export default EtatLavage;

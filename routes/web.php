@@ -4,11 +4,13 @@ use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth;
 
 use App\Http\Controllers\ActeurController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ClientController;
 use App\Http\Controllers\NouveauLavageController;
+use App\Models\Vetement;
 
 use App\Http\Controllers\LavageController;
 use App\Http\Controllers\VetementController;
@@ -16,6 +18,7 @@ use App\Http\Controllers\FactureController;
 use App\Http\Controllers\StructureController;
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\EmplacementController;
 use App\Http\Controllers\TypeController;
 use App\Http\Middleware\ProtectMiddleware;
 
@@ -66,6 +69,7 @@ Route::post('/Inscription', [ActeurController::class, 'store']);
 
 
 Route::post('/Admin', [ActeurController::class, 'handleRequest']);
+Route::post('/ajout-acteur', [ActeurController::class, 'addActor']);
 
 
 Route::get('/Admin/Emp/list', [ActeurController::class, 'index'])->name('admin.list');
@@ -142,7 +146,7 @@ Route::get('/receptionniste/factures/{id}', [FactureController::class, 'show'])-
 
    
     
-    Route::get('/receptionniste/etat-lavage', [LavageController::class, 'index']); // Liste des lavages
+    Route::get('/receptionniste/etat-lavage', [LavageController::class, 'index'])->name('etat-lavage'); // Liste des lavages
     Route::post('/lavages/{lavage}/retirer', [LavageController::class, 'retirer']); // Retirer un lavage
     Route::get('/lavages/{lavage}/details', [LavageController::class, 'details']); // Détails d'un lavage
     Route::post('/vetements/{vetement}/retirer', [VetementController::class, 'retirer']); // Retirer un vêtement
@@ -211,7 +215,51 @@ Route::patch('/lavages/{id}/update-emplacement', [LavageController::class, 'upda
 //     Route::patch('/vetements/{vetement}/update-etat', [RepassageController::class, 'updateEtat']);
 //     Route::patch('/lavages/{lavage}/update-emplacement', [RepassageController::class, 'updateEmplacement']);
 // });
+Route::get('/page-succes', function () {
+    return Inertia::render('PageSucces');
+})->name('page-succes');
 
-
-
+Route::middleware(['auth:structure'])->group(function () {
+    Route::get('/emplacements', [EmplacementController::class, 'index'])->name('emplacements');
+    Route::post('/emplacements', [EmplacementController::class, 'store']);
+    Route::put('/emplacements/{id}', [EmplacementController::class, 'update']);
+    Route::delete('/emplacements/{id}', [EmplacementController::class, 'destroy']);
+});
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   
+Route::get('/tracabilite', function () {
+    return Inertia::render('Tracabilite'); // Page de traçabilité
+})->name('tracabilite');
+
+Route::get('/vetements/{id}/details', function ($id) {
+    $vetement = Vetement::with([
+        'lavage.client',
+        'lavage.receptionniste', // Ajout du réceptionniste
+        'categorie',
+        'type',
+        'laveur',
+        'repasseur',
+    ])->find($id);
+
+    if (!$vetement) {
+        return redirect()->route('tracabilite')->with('error', 'Vêtement introuvable.');
+    }
+
+    // Récupérer la structure connectée
+    $structure = Auth::guard('structure')->user();
+
+    // Vérifier que le réceptionniste appartient à la même structure
+    if (!$structure || $vetement->lavage->receptionniste->structure_id !== $structure->id) {
+        return Inertia::render('Tracabilite', [
+            'error' => "Vous n'êtes pas autorisé à voir les informations de ce vêtement."
+        ]);
+    }
+
+    return Inertia::render('Tracabilite', [
+        'vetement' => $vetement
+    ]);
+})->name('vetement.details');
+
+
+Route::get('/acteurs/profil', [ActeurController::class, 'edit'])->name('profil');
+Route::patch('/acteurs/update', [ActeurController::class, 'update'])->name('acteurs.update');

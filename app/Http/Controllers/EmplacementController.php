@@ -3,21 +3,26 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use App\Models\Type;
+use App\Models\Emplacement;
 use Illuminate\Support\Facades\Auth;
 
-class TypeController extends Controller
+class EmplacementController extends Controller
 {
     public function index()
     {
         $structure = Auth::guard('structure')->user(); // Récupère la structure connectée
-        $types = Type::where('structure_id', $structure->id)->where('actif', 'O')->get();
-
-        return inertia('Types', [
-            'types' => $types,
+        
+        // Sélectionner uniquement les emplacements actifs de la structure connectée
+        $emplacements = Emplacement::where('structure_id', $structure->id)
+                                   ->where('actif', 'O') // Condition pour les emplacements actifs
+                                   ->get();
+    
+        return inertia('Emplacements', [
+            'emplacements' => $emplacements,
             'structure' => $structure,
         ]); 
     }
+    
 
     public function store(Request $request)
 {
@@ -31,7 +36,7 @@ class TypeController extends Controller
         return back()->withErrors(['error' => 'Aucune structure connectée.']);
     }
 
-    Type::create([
+    Emplacement::create([
         'nom' => $request->nom,
         'structure_id' => $structure_id, // ✅ Associer à la structure connectée
     ]);
@@ -46,17 +51,18 @@ class TypeController extends Controller
             'nom' => 'required|string|max:255',
         ]);
 
-        $type = Type::findOrFail($id);
-        $type->update(['nom' => $request->nom]);
+        $emplacement = Emplacement::findOrFail($id);
+        $emplacement->update(['nom' => $request->nom]);
 
         return redirect()->back();
     }
 
     public function destroy($id)
     {
-        $type = Type::findOrFail($id);
-        $type->update(['actif' => 'N']); // ⚠️ Met à jour au lieu de supprimer
-
+        $emplacement = Emplacement::findOrFail($id);
+        $emplacement->update(['actif' => 'N']); // ⚠️ Met à jour au lieu de supprimer
+    
         return redirect()->back()->with('success', 'Emplacement désactivé avec succès.');
     }
+    
 }

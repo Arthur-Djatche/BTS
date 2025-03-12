@@ -20,6 +20,7 @@ class Acteur extends Authenticatable
         'password',
         'role',
         'structure_id', // ✅ Assurez-vous que c'est bien présent ici
+        'actif',
     ];
 
     // Si vous avez des colonnes cachées, ajoutez-les ici
