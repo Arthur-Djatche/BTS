@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Inertia } from "@inertiajs/inertia";
 import { Link } from "@inertiajs/inertia-react";
 import { usePage } from "@inertiajs/react";
-import Layout from "@/Layouts/Layout";
+
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
 import Barcode from "react-barcode";
 import { router } from '@inertiajs/react';
@@ -12,10 +12,13 @@ const NouveauLavage = () => {
   const [nombreVetements, setNombreVetements] = useState(1);
   const [vetements, setVetements] = useState([{ categorie_id: "", type_id: "", couleur: "#000000" }]);
   const [facture, setFacture] = useState(null); // Facture pour la deuxième étape
-  const { clients, categories, types } = usePage().props;
+  const { clients, categories, types, consignes } = usePage().props;
   const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
   const [filteredClients, setFilteredClients] = useState([]); // Liste filtrée des clients
+  const [selectedConsigne, setSelectedConsigne] = useState("");
+  const [useKilogramme, setUseKilogramme] = useState(false);
+  const [kilogrammes, setKilogrammes] = useState("");
   
 
 
@@ -71,15 +74,6 @@ const NouveauLavage = () => {
     setVetements(updatedVetements);
   };
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   // Générer une facture temporaire pour l'étape suivante
-  //   const numeroLavage = Date.now(); // Exemple de numéro unique basé sur l'heure
-  //   const factureTemp = {
-  //     client: nomClient,
-  //   };
-  // };
-
   const handleSave = (e) => {
     e.preventDefault();
     if (!selectedClient) {
@@ -96,6 +90,9 @@ const NouveauLavage = () => {
     const data = {
       client_id: selectedClient.id,
       vetements: vetements,
+      consigne_id: selectedConsigne,
+      kilogrammes: useKilogramme ? kilogrammes : null,  
+
     };
 
     console.log("Données envoyées :", data);
@@ -168,6 +165,25 @@ const NouveauLavage = () => {
             >
               Ajouter Client
             </button>
+          </div>
+          <div>
+            <label className="block text-blue-600 font-medium">Consigne de lavage</label>
+            <select className="w-full border px-4 py-2 rounded" value={selectedConsigne} onChange={(e) => setSelectedConsigne(e.target.value)}>
+              <option value="">-- Sélectionner une consigne --</option>
+              {consignes.map((consigne) => (
+                <option key={consigne.id} value={consigne.id}>{consigne.nom}</option>
+              ))}
+            </select>
+          </div>
+           {/* Activer/Désactiver le kilogrammage */}
+           <div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={useKilogramme} onChange={() => setUseKilogramme(!useKilogramme)} />
+              <span className="text-blue-600 font-medium">Facturer en kilogrammes</span>
+            </label>
+            {useKilogramme && (
+              <input type="number" min="1" className="w-full border px-4 py-2 rounded mt-2" value={kilogrammes} onChange={(e) => setKilogrammes(e.target.value)} placeholder="Saisir le poids (kg)" />
+            )}
           </div>
 
           {/* Nombre de vêtements */}
@@ -332,6 +348,5 @@ const NouveauLavage = () => {
   );
 };
 
-NouveauLavage.layout = (page) => <Layout children={page} />;
 
 export default NouveauLavage;

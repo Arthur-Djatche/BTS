@@ -1,6 +1,6 @@
 import React from "react";
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
-import Layout from "@/Layouts/Layout";
+
 
 function DashboardReceptionniste() {
   return (
@@ -58,6 +58,6 @@ function DashboardReceptionniste() {
   );
 }
 
-DashboardReceptionniste.layout = (page) => <Layout children={page}/>
+
 
 export default DashboardReceptionniste;

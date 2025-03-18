@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Models\Client;
 use App\Models\Categorie;
+use App\Models\Consigne;
 use App\Models\Vetement;
 use App\Models\Type;
 use App\Models\Lavage;
+use App\Models\Kilogramme;
 use Inertia\Inertia;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -34,12 +36,15 @@ class NouveauLavageController extends Controller
     $clients = Client::where('structure_id', $structureId)->get();
     $categories = Categorie::where('structure_id', $structureId)->get();
     $types = Type::where('structure_id', $structureId)->get();
+    $consignes = Consigne::where('structure_id', $structureId)->get();
 
     // ✅ Envoyer les données au frontend via Inertia
     return Inertia::render('NouveauLavage', [
         'clients' => $clients,
         'categories' => $categories,
         'types' => $types,
+        'consignes' => $consignes,
+
     ]);
 }
     public function create()
@@ -59,52 +64,113 @@ class NouveauLavageController extends Controller
 
     public function store(Request $request)
     {
-
-          // Ajouter un log pour les données reçues
-    Log::info('Données reçues :', $request->all());
-
-        // Validation des données reçues
+        Log::info('📩 Données reçues :', $request->all());
+    
+        // ✅ Récupérer l'acteur connecté
+        $acteur = Auth::guard('web')->user();
+    
+        // ✅ Validation des données reçues
         $validated = $request->validate([
             'client_id' => 'required|exists:clients,id',
             'vetements' => 'required|array',
             'vetements.*.categorie_id' => 'required|exists:categories,id',
             'vetements.*.type_id' => 'required|exists:types,id',
             'vetements.*.couleur' => 'required|string',
+            'consigne_id' => 'required|exists:consignes,id',
+            'kilogrammes' => 'nullable|numeric',
         ]);
-        Log::info('Données validées :', $validated);
-
-        // Générer un code de retrait unique
-    $codeRetrait = strtoupper(Str::random(6));
-
-        // Création d'un lavage
+    
+        Log::info('✅ Données validées :', $validated);
+    
+        // 🔥 Générer un code de retrait unique
+        $codeRetrait = strtoupper(Str::random(6));
+    
+        // 🔍 Récupérer la consigne complète
+        $consigne = Consigne::findOrFail($validated['consigne_id']);
+        $pourcentageConsigne = $consigne->pourcentage_variation / 100;
+    
+        $tarifTotal = 0; 
+    
+        // 🏋️‍♂️ Facturation en kilogrammes
+        if (!empty($validated['kilogrammes'])) {
+            $tarifKg = Kilogramme::where('min_kg', '<=', $validated['kilogrammes'])
+                ->where('max_kg', '>=', $validated['kilogrammes'])
+                ->value('tarif');
+    
+            if (!$tarifKg) {
+                return back()->withErrors(['kilogrammes' => '❌ Aucune plage de kilogrammes ne correspond.']);
+            }
+    
+            $prix = $tarifKg * $validated['kilogrammes'];
+            $tarifTotal = $prix + ($prix * $pourcentageConsigne);
+        } else {
+            foreach ($validated['vetements'] as $vetement) {
+                $categorie = Categorie::findOrFail($vetement['categorie_id']);
+                $type = Type::findOrFail($vetement['type_id']);
+    
+                $prixVetement = $categorie->tarif_base + ($categorie->tarif_base * $type->pourcentage_variation / 100);
+                $tarifTotal += $prixVetement;
+            }
+    
+            $tarifTotal += $tarifTotal * $pourcentageConsigne;
+        }
+    
+        // 📝 Création du lavage
         $lavage = Lavage::create([
             'client_id' => $validated['client_id'],
             'code_retrait' => $codeRetrait,
-            'receptionniste_id' => Auth::guard('web')->id(), // ID du réceptionniste authentifié
+            'receptionniste_id' => Auth::guard('web')->id(),
+            'consigne_id' => $validated['consigne_id'],
+            'kilogrammes' => $validated['kilogrammes'] ?? null,
+            'tarif_total' => $tarifTotal,
         ]);
-
-    Log::info('Lavage enregistré avec code de retrait :', ['id' => $lavage->id, 'code' => $lavage->code_retrait]);
-
-
-        // Création des vêtements associés
+    
+        Log::info("✅ Lavage enregistré - ID: {$lavage->id}, Code: {$codeRetrait}, Tarif: {$tarifTotal} FCFA");
+    
+        // 🛍️ Création des vêtements
         foreach ($validated['vetements'] as $vetement) {
+            $categorie = Categorie::findOrFail($vetement['categorie_id']);
+            $type = Type::findOrFail($vetement['type_id']);
+    
+            $prixVetement = null;
+            if (empty($validated['kilogrammes'])) {
+                $prixVetement = $categorie->tarif_base + ($categorie->tarif_base * $type->pourcentage_variation / 100);
+            }
+    
             Vetement::create([
                 'lavage_id' => $lavage->id,
-                'client_id' => $validated['client_id'],
                 'categorie_id' => $vetement['categorie_id'],
                 'type_id' => $vetement['type_id'],
                 'couleur' => $vetement['couleur'],
+                'tarif' => $prixVetement,
             ]);
         }
-
-        Log::info('Lavage créé avec succès. ID du lavage :', ['lavage_id' => $lavage->id]);
-
-        // return response()->json(['message' => 'Lavage enregistré avec succès', 'lavage_id' => $lavage->id], 200);
-        return redirect()->route('facture', ['lavage_id' => $lavage->id])->with([
-            'message' => 'Lavage enregistré avec succès !',
-            'lavage_id' => $lavage->id
+    
+        // ✅ Récupérer la structure associée à l'acteur connecté
+        $structure = Structure::where('id', $acteur->structure_id)->first();
+    
+        // ✅ Retourner toutes les informations nécessaires
+        return Inertia::render('Facture', [
+            'lavage' => $lavage->load([
+                'client',
+                'vetements.categorie',
+                'vetements.type',
+                'consigne', // 🔥 Ici on retourne la consigne complète !
+                'receptionniste',
+            ]),
+            'message' => '✅ Lavage enregistré avec succès !',
+            'acteur' => $acteur,
+            'structure' => $structure ? [
+                'nom_structure' => $structure->nom_structure,
+                'telephone' => $structure->telephone,
+                'ville' => $structure->ville,
+                'email' => $structure->email,
+            ] : null, 
         ]);
     }
+    
+
+    
 
 
 
@@ -127,16 +193,23 @@ class NouveauLavageController extends Controller
             ->orderBy('created_at', 'desc')
             ->first();
     
-        return inertia('Facture', [
-            'lavage' => $lavage,
-            'acteur' => $acteur,
-            'structure' => $structure ? [
-                'nom_structure' => $structure->nom_structure,
-                'telephone' => $structure->telephone,
-                'ville' => $structure->ville,
-                'email' => $structure->email,
-            ] : null, // ✅ Retourne `null` si aucune structure n'est trouvée
-        ]);
+            return Inertia::render('Facture', [
+                'lavage' => $lavage->load([
+                    'client',
+                    'vetements.categorie',
+                    'vetements.type',
+                    'consigne', // 🔥 Ici on retourne la consigne complète !
+                    'receptionniste',
+                ]),
+                'message' => '✅ Lavage enregistré avec succès !',
+                'acteur' => $acteur,
+                'structure' => $structure ? [
+                    'nom_structure' => $structure->nom_structure,
+                    'telephone' => $structure->telephone,
+                    'ville' => $structure->ville,
+                    'email' => $structure->email,
+                ] : null, 
+            ]);
     }
     
 

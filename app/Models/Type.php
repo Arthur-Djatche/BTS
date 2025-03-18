@@ -8,7 +8,7 @@ class Type extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nom', 'structure_id', 'actif'];
+    protected $fillable = ['nom', 'structure_id', 'actif','pourcentage_variation',];
 
     public function vetements()
     {

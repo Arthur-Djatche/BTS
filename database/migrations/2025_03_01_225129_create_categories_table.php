@@ -8,7 +8,8 @@ return new class extends Migration {
     {
         Schema::create('categories', function (Blueprint $table) {
             $table->id();
-            $table->string('nom');
+            $table->string('nom')->unique();
+            $table->decimal('tarif_base', 10, 2);
             $table->foreignId('structure_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { Link, usePage } from "@inertiajs/react";
 import { Inertia } from "@inertiajs/inertia";
-import { FaHome, FaTshirt, FaList, FaBars, FaTimes, FaSignOutAlt, FaUserCircle } from "react-icons/fa";
-import { inertia } from "framer-motion";
+import { 
+  FaHome, FaTshirt, FaList, FaBars, FaTimes, 
+  FaSignOutAlt, FaUserCircle 
+} from "react-icons/fa";
 
 function LayoutReceptionniste({ children }) {
   const { url } = usePage();
@@ -16,14 +18,24 @@ function LayoutReceptionniste({ children }) {
   };
 
   return (
-    <div className="flex h-screen bg-gray-100">
+    <div className="flex flex-col md:flex-row h-screen bg-gray-100">
+
+      {/* ✅ Bouton Menu Burger pour Mobile */}
+      <button 
+        className="md:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-2 rounded-lg shadow-md"
+        onClick={() => setSidebarOpen(!isSidebarOpen)}
+      >
+        {isSidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+      </button>
+
       {/* ✅ Sidebar (Menu latéral) */}
-      <aside className={`fixed md:static z-40 top-0 left-0 w-64 bg-blue-700 text-white flex flex-col p-6 h-full transform ${
+      <aside 
+        className={`fixed md:static top-0 left-0 h-full w-64 bg-blue-700 text-white flex flex-col p-6 transition-transform duration-300 shadow-lg ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
-        } md:translate-x-0 transition-transform duration-300 ease-in-out shadow-lg`}
+        } md:translate-x-0`}
       >
         {/* ✅ Titre avec une icône */}
-        <div className="flex items-center justify-between border-b pb-4 mb-4 mt-20">
+        <div className="mt-20 flex items-center justify-between border-b pb-4 mb-4 mt-10">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <FaTshirt /> Réceptionniste
           </h2>
@@ -72,9 +84,11 @@ function LayoutReceptionniste({ children }) {
 
       {/* ✅ Contenu Principal avec Header */}
       <div className="flex flex-col flex-1 min-h-screen">
+        
         {/* ✅ Header (Barre du haut) */}
-        <div className="print:hidden fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md border-b border-blue-700 z-50">
+        <div className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md border-b border-blue-700 z-40">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+            
             {/* ✅ Logo ou icône de l'entreprise */}
             <div className="flex items-center space-x-3">
               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold">

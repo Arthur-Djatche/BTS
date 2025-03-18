@@ -18,6 +18,14 @@ return [
         'token' => env('POSTMARK_TOKEN'),
     ],
 
+   'orange_sms' => [
+    'client_id' => env('ORANGE_SMS_CLIENT_ID'),
+    'client_secret' => env('ORANGE_SMS_CLIENT_SECRET'),
+    'sender' => env('ORANGE_SMS_SENDER'),
+    'api_url' => env('ORANGE_SMS_API_URL'),
+    'sms_url' => env('ORANGE_SMS_SMS_URL'),
+],
+
     'ses' => [
         'key' => env('AWS_ACCESS_KEY_ID'),
         'secret' => env('AWS_SECRET_ACCESS_KEY'),

@@ -1,6 +1,6 @@
 import React from "react";
 import LayoutLaveur from "@/Layouts/LayoutLaveur";
-import Layout from "@/Layouts/Layout";
+
 
 function DashboardLaveur() {
   return (
@@ -52,6 +52,5 @@ function DashboardLaveur() {
   );
 }
 
-DashboardLaveur.layout = (page) => <Layout children={page}/>
 
 export default DashboardLaveur;

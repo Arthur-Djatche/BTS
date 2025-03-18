@@ -1,11 +1,14 @@
 <?php
 namespace App\Http\Controllers;
 
+use App\Mail\VetementsTerminer;
+use App\Mail\VetementsTerminerMail;
 use App\Models\Vetement;
 use App\Models\Lavage;
 use App\Models\Emplacement;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Mail;
 
 
 class RepassageController extends Controller

@@ -18,8 +18,11 @@ use App\Http\Controllers\FactureController;
 use App\Http\Controllers\StructureController;
 
 use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\SmsController;
 use App\Http\Controllers\EmplacementController;
 use App\Http\Controllers\TypeController;
+use App\Http\Controllers\KilogrammesController;
+use App\Http\Controllers\ConsigneController;
 use App\Http\Middleware\ProtectMiddleware;
 
 
@@ -201,6 +204,19 @@ Route::middleware(['auth:structure'])->group(function () {
     Route::put('/types/{id}', [TypeController::class, 'update']);
     Route::delete('/types/{id}', [TypeController::class, 'destroy']);
 });
+Route::middleware(['auth:structure'])->group(function () {
+    Route::get('/consignes', [ConsigneController::class, 'index']);
+    Route::post('/consignes', [ConsigneController::class, 'store']);
+    Route::put('/consignes/{id}', [ConsigneController::class, 'update']);
+    Route::put('/consignes/{id}/disable', [ConsigneController::class, 'destroy']);
+    Route::put('/consignes/{id}/restore', [ConsigneController::class, 'restore']);
+});
+Route::middleware(['auth:structure'])->group(function () {
+    Route::get('/kilogrammes', [KilogrammesController::class, 'index']);
+    Route::post('/kilogrammes', [KilogrammesController::class, 'store']);
+    Route::put('/kilogrammes/{id}', [KilogrammesController::class, 'update']);
+    Route::delete('/kilogrammes/{id}', [KilogrammesController::class, 'destroy']);
+});
 
 Route::middleware('auth:web')->group(function () {
     
@@ -263,3 +279,17 @@ Route::get('/vetements/{id}/details', function ($id) {
 
 Route::get('/acteurs/profil', [ActeurController::class, 'edit'])->name('profil');
 Route::patch('/acteurs/update', [ActeurController::class, 'update'])->name('acteurs.update');
+
+
+
+Route::get('/test-auth', [SmsController::class, 'testOrangeAuth']);
+
+// Route::get('/test-sms', [SmsController::class, 'testSendSms']);
+
+use App\Services\OrangeSmsService;
+
+
+
+
+Route::get('/send-sms', [SmsController::class, 'index'])->name('sms.index');
+Route::post('/send-sms', [SmsController::class, 'sendSms'])->name('sms.send');

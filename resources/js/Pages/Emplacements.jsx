@@ -3,7 +3,6 @@ import { Inertia } from "@inertiajs/inertia";
 import { usePage } from "@inertiajs/react";
 import { FaPlus, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 import LayoutAdmin from "@/Layouts/LayoutAdmin";
-import Layout from "@/Layouts/Layout";
 
 const Emplacements = () => {
   const { emplacements, structure } = usePage().props;
@@ -48,7 +47,7 @@ const Emplacements = () => {
 
   return (
     <LayoutAdmin>
-      <div className="p-6 bg-white rounded-lg shadow-md">
+      <div className="mt-20 p-6 bg-white rounded-lg shadow-md">
         <div className="flex justify-between items-center mb-4">
           <h1 className="text-2xl font-bold text-blue-600">Gestion des Emplacements</h1>
           <button
@@ -149,6 +148,5 @@ const Emplacements = () => {
   );
 };
 
-Emplacements.layout = (page) => <Layout children={page} />;
 
 export default Emplacements;

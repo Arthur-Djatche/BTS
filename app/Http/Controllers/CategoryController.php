@@ -23,6 +23,7 @@ class CategoryController extends Controller
 {
     $request->validate([
         'nom' => 'required|string|max:255',
+        'tarif_base' => 'required|numeric',
     ]);
 
     $structure_id = Auth::guard('structure')->id(); // ✅ Récupérer la structure connectée
@@ -33,6 +34,7 @@ class CategoryController extends Controller
 
     Categorie::create([
         'nom' => $request->nom,
+        'tarif_base' => $request->tarif_base,
         'structure_id' => $structure_id, // ✅ Associer à la structure connectée
     ]);
 
@@ -43,11 +45,11 @@ class CategoryController extends Controller
     public function update(Request $request, $id)
     {
         $request->validate([
-            'nom' => 'required|string|max:255',
+            'tarif_base' => 'required|numeric',
         ]);
 
         $category = Categorie::findOrFail($id);
-        $category->update(['nom' => $request->nom]);
+        $category->update(['tarif_base' => $request->tarif_base]);
 
         return redirect()->back();
     }

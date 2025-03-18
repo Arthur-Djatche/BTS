@@ -6,6 +6,8 @@ use App\Models\Lavage;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Mail\VetementsRetirerMail;
+use Illuminate\Support\Facades\Mail;
 
 
 class LavageController extends Controller
@@ -75,8 +77,18 @@ public function retirer(Lavage $lavage)
 {
     $lavage->update(['etat' => 'Retiré']);
     $lavage->vetements()->update(['etat' => 'Retiré']);
+
+    // $lavagesRetirer = Lavage::whereDoesntHave('vetements', function ($query) {
+    //     $query->where('etat', '!=', 'Retiré');
+    // });
+    // Mail::to($lavagesRetirer->client->email)->send(new VetementsRetirerMail($lavagesRetirer));
+    
+
     return back()->with('success', 'Lavage marqué comme retiré.');
+
+   
 }
+
 
 public function details(Lavage $lavage)
 {

@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+use App\Mail\VetementsRetirerMail;
 use App\Models\Vetement;
 use App\Models\Lavage;
 use App\Models\Emplacement;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Mail\VetementsPretsMail;
 use App\Mail\VetementsEnLavageMail;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 
 class VetementController extends Controller
@@ -24,44 +26,63 @@ class VetementController extends Controller
  
 public function updateEtat(Request $request, $id)
 {
-
-    // Validation des données
+    // ✅ Validation des données envoyées
     $validated = $request->validate([
         'etat' => 'required|in:En lavage,En repassage,Terminé,Retiré',
+        'type_consigne' => 'nullable|string'
     ]);
 
-    // Récupérer le vêtement à mettre à jour
-    $vetement = Vetement::with('lavage.vetements', 'lavage.client')->findOrFail($id);
+    // ✅ Récupérer le vêtement à mettre à jour avec la relation lavage et consigne
+    $vetement = Vetement::with('lavage.consigne')->findOrFail($id);
 
-    // Mettre à jour l'état du vêtement et associer l'acteur correspondant
-    if ($validated['etat'] === 'En repassage') {
-        $vetement->laveur_id = Auth::guard('web')->id(); // ID du laveur authentifié
-    } elseif ($validated['etat'] === 'Terminé') {
-        $vetement->repasseur_id = Auth::guard('web')->id(); // ID du repasseur authentifié
+     // ✅ Log pour vérifier les relations
+     Log::info("💾 Vetement trouvé :", ['id' => $vetement->id, 'etat_actuel' => $vetement->etat]);
+
+    // ✅ Déterminer le type de consigne
+
+    // Vérifier si l’état change correctement
+    if ($validated['etat'] === 'En repassage' && $vetement->lavage->consigne->type_consigne === 'Repassage_Simple') {
+        Log::info("🛠 Repassage simple détecté, laveur_id reste NULL");
+        $vetement->laveur_id = null; 
+    } elseif ($validated['etat'] === 'En repassage') {
+        $vetement->laveur_id = Auth::guard('web')->id();
+    }
+     elseif ($validated['etat'] === 'Terminé' && $vetement->lavage->consigne->type_consigne === 'Lavage_Simple') {
+        $vetement->laveur_id = Auth::guard('web')->id();
+        $vetement->repasseur_id = null;
+    }
+     elseif ($validated['etat'] === 'Terminé') {
+        $vetement->repasseur_id = Auth::guard('web')->id();
     }
 
+    // ✅ Mise à jour de l'état
     $vetement->etat = $validated['etat'];
-    $vetement->save(); // Sauvegarder les modifications
+    $vetement->save(); // Sauvegarde
 
-    // Vérifier si tous les vêtements du lavage sont à l'état "Terminé"
+    // Vérifier si tous les vêtements du lavage sont "Terminé"
     $lavage = Lavage::with('vetements')->findOrFail($vetement->lavage_id);
     $tousPrets = $lavage->vetements->every(fn($v) => $v->etat === 'Terminé');
 
     if ($tousPrets) {
-        // Envoyer un email au client si tous les vêtements sont prêts
         Mail::to($lavage->client->email)->send(new VetementsPretsMail($lavage));
     }
-    // Vérifier si tous les vêtements du lavage sont à l'état "En Lavage"
-    $lavage = Lavage::with('vetements')->findOrFail($vetement->lavage_id);
+
+    // Vérifier si tous les vêtements sont "En lavage"
     $tousEnLavage = $lavage->vetements->every(fn($v) => $v->etat === 'En lavage');
 
     if ($tousEnLavage) {
-        // Envoyer un email au client si tous les vêtements sont prêts
         Mail::to($lavage->client->email)->send(new VetementsEnLavageMail($lavage));
+    }
+
+    $lavagesRetirer = $lavage->vetements->every(fn($v) => $v->etat === 'Retiré');
+
+    if ($lavagesRetirer) {
+        Mail::to($lavage->client->email)->send(new VetementsRetirerMail($lavage));
     }
 
     return redirect()->back()->with('success', 'État du vêtement mis à jour avec succès.');
 }
+
 
 
 public function indexLavage()
@@ -86,7 +107,7 @@ public function indexLavage()
         });
     })
     ->where('etat', 'En lavage')
-    ->with(['categorie', 'type', 'lavage'])
+    ->with(['categorie', 'type','lavage.consigne'])
     ->get();
 
     return inertia('TacheLavages', [

@@ -2,116 +2,146 @@ import React from "react";
 import QRCode from "react-qr-code";
 import { usePage } from "@inertiajs/react";
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
-import Layout from "@/Layouts/Layout";
 import { Inertia } from "@inertiajs/inertia";
 
 const Facture = () => {
   const { lavage, structure, acteur } = usePage().props;
 
-  const handlePrintAndUpdate = () => {
-    lavage.vetements.forEach((vetement) => {
-      Inertia.patch(`/vetements/${vetement.id}/update-etat`, {
-        etat: "En lavage",
-      });
-    });
-    window.print();
-    Inertia.visit(`/receptionniste/nouveau-lavage`);
-  };
-
-  const formatDate = (dateString) => {
-    const options = { year: "numeric", month: "long", day: "numeric" };
-    return new Date(dateString).toLocaleDateString(undefined, options);
-  };
-
-  if (!lavage) {
+  // Vérification des données avant d'afficher la facture
+  console.log("Props reçus :", { lavage, structure, acteur });
+  if (!lavage || !structure || !acteur) {
     return <p>Chargement...</p>;
   }
 
-  const { id, client, vetements, created_at, code_retrait } = lavage;
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString("fr-FR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const handlePrintAndUpdate = () => {
+    if (!lavage || !lavage.vetements) {
+      console.error("❌ Erreur : Données de lavage indisponibles !");
+      return;
+    }
+  
+    lavage.vetements.forEach((vetement) => {
+      const nouvelEtat = lavage.consigne?.type_consigne === "Repassage_Simple" ? "En repassage" : "En lavage";
+  
+      Inertia.patch(`/vetements/${vetement.id}/update-etat`, {
+        etat: nouvelEtat
+      }, {
+        onSuccess: () => {
+          console.log(`✅ Vêtement ${vetement.id} mis à jour à l'état : ${nouvelEtat}`);
+        },
+        onError: (errors) => {
+          console.error(`❌ Erreur mise à jour vêtement ${vetement.id} :`, errors);
+        },
+      });
+    });
+  
+    window.print();
+    Inertia.visit(`/receptionniste/nouveau-lavage`);
+  };
+  
 
   return (
     <LayoutReceptionniste className="print:hidden">
- 
- <div className="p-6 bg-white rounded-lg shadow-md max-w-2xl mx-auto print:max-w-full border">
-      {/* Logo et Infos Structure */}
-      <div className="text-center mb-4">
-        <div className="flex justify-center mb-2">
-          {/* Espace pour le logo */}
-          <div className="w-20 h-20 bg-gray-200 flex items-center justify-center rounded-full">
-            <span className="text-gray-500 text-xs">LOGO</span>
+      <div className="p-6 bg-white rounded-lg shadow-md max-w-3xl mx-auto print:max-w-full border">
+        {/* ✅ En-tête avec Infos Structure */}
+        <div className="text-center mb-4">
+          <div className="flex justify-center mb-2">
+            <div className="w-20 h-20 bg-gray-200 flex items-center justify-center rounded-full">
+              <span className="text-gray-500 text-xs">LOGO</span>
+            </div>
+          </div>
+          <h2 className="text-lg font-bold text-gray-700">{structure.nom_structure}</h2>
+          <p className="text-sm text-gray-600">{structure.ville} - {structure.telephone}</p>
+          <p className="text-sm text-gray-600">{structure.email}</p>
+        </div>
+
+        {/* ✅ Informations Lavage + QR Code */}
+        <div className="border-b border-dashed pt-4 pb-4">
+          <h1 className="text-xl font-bold text-blue-600 text-center mb-2">FACTURE</h1>
+          
+          <div className="flex justify-between items-center text-sm text-gray-700">
+            <div>
+              <p><strong>Date :</strong> {formatDate(lavage.created_at)}</p>
+              <p><strong>Client :</strong> {lavage.client.nom} {lavage.client.prenom}</p>
+              <p><strong>Email :</strong> {lavage.client.email}</p>
+              <p><strong>No Lavage :</strong> {lavage.id}</p>
+              <p><strong>Réceptionné par :</strong> {acteur.nom} {acteur.prenom}</p>
+              
+              {/* ✅ Vérification de consigne avant affichage */}
+              <p>
+                <strong>Consigne :</strong> {lavage.consigne?.nom || "Non spécifié"} 
+                ({lavage.consigne?.pourcentage_variation || 0}%)
+              </p>
+
+              <p><strong>Total :</strong> {parseFloat(lavage.tarif_total).toFixed(2)} FCFA</p>
+
+            </div>
+
+            {/* ✅ QR Code Code Retrait */}
+            <div className="ml-4">
+              <QRCode value={lavage.code_retrait.toString()} size={90} />
+              <p className="text-center mt-2 text-gray-700 font-bold">Code Retrait</p>
+            </div>
           </div>
         </div>
-        <h2 className="text-lg font-bold text-gray-700">{structure.nom_structure}</h2>
-        <p className="text-sm text-gray-600">{structure.ville} - {structure.telephone}</p>
-        <p className="text-sm text-gray-600">{structure.email}</p>
-      </div>
 
-      {/* Détails de la Facture */}
-      <div className="border-b border-dashed pt-4">
-        <h1 className="text-xl font-bold text-blue-600 text-center mb-2">FACTURE</h1>
-        
-        {/* Informations Client & Lavage + QR Code en ligne */}
-<div className="flex justify-between items-center text-sm text-gray-700 mt-4 mb-8">
-  {/* Infos Client & Lavage (à gauche) */}
-  <div>
-    <p><span className="font-semibold">Date :</span> {formatDate(lavage.created_at)}</p>
-    <p>
-      <span className="font-semibold">Client :</span> {lavage.client.nom} {lavage.client.prenom} 
-      <br /> ({lavage.client.email})
-    </p>
-    <p><span className="font-semibold">No Lavage :</span> {lavage.id}</p>
-    <p><span className="font-semibold">Nombre de vêtements :</span> {lavage.vetements.length}</p>
-    <p><span className="font-semibold"> Receptionné par:</span> {acteur.nom} {acteur.prenom}</p>
-  </div>
-  
-
-  {/* QR Code (à droite) */}
-  <div className="ml-4">
-    <QRCode value={lavage.code_retrait.toString()} size={90} />
-  </div>
-</div>
-      </div>
-    
-
-        <h2 className="text-lg font-bold text-blue-600 mb-2 text-center">Détail des vêtements</h2>
+        {/* ✅ Détail des vêtements */}
+        <h2 className="text-lg font-bold text-blue-600 mt-4 text-center">Détail des Vêtements</h2>
         <table className="w-full text-left border-collapse border border-gray-300 text-sm">
-  <thead>
-    <tr>
-      <th className="border px-2 py-1">Catégorie</th>
-      <th className="border px-2 py-1">Type</th>
-      <th className="border px-2 py-1">Couleur</th>
-      <th className="border px-2 py-1">QR Code</th>
-    </tr>
-  </thead>
-  <tbody>
-    {vetements.map((vetement, index) => (
-      <tr key={vetement.id}>
-        <td className="border px-2 py-1">{vetement.categorie.nom}</td>
-        <td className="border px-2 py-1">{vetement.type.nom}</td>
-        <td className="border px-2 py-1">
-          <div
-            className="w-4 h-4 rounded-full mx-auto"
-            style={{ backgroundColor: vetement.couleur }}
-          ></div>
-        </td>
-        <td className="border px-2 py-1 text-center">
-          <div className="border-2 border-dashed p-2 inline-block rounded-lg">
-            {/* QR Code unique pour chaque vêtement */}
-            <QRCode value={vetement.id.toString()} size={50} />
+          <thead>
+            <tr className="bg-gray-100">
+              <th className="border px-3 py-2">Catégorie</th>
+              <th className="border px-3 py-2">Type</th>
+              <th className="border px-3 py-2">Couleur</th>
+              <th className="border px-3 py-2">Prix (FCFA)</th>
+              <th className="border px-3 py-2">QR Code</th>
+            </tr>
+          </thead>
+          <tbody>
+            {lavage.vetements.map((vetement, index) => (
+              <tr key={vetement.id}>
+                <td className="border px-3 py-2">{vetement.categorie.nom}</td>
+                <td className="border px-3 py-2">{vetement.type.nom}</td>
+                <td className="border px-3 py-2 text-center">
+                  <div
+                    className="w-4 h-4 rounded-full mx-auto"
+                    style={{ backgroundColor: vetement.couleur }}
+                  ></div>
+                </td>
+                <td className="border px-3 py-2 text-right">
+        {vetement.tarif !== null && vetement.tarif !== undefined
+          ? Number(vetement.tarif).toFixed(2)
+          : "N/A"}
+      </td>
+                <td className="border px-3 py-2 text-center">
+                  <div className="border-2 border-dashed p-2 inline-block rounded-lg">
+                    <QRCode value={vetement.id.toString()} size={50} />
+                    <p className="mt-2 font-semibold text-gray-700">
+                      {index + 1}/{lavage.vetements.length}-{lavage.id}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
 
-            {/* Numéro du vêtement dans l'ordre - ID du lavage */}
-            <p className="mt-2 font-semibold text-gray-700">
-              {index + 1}/{lavage.vetements.length}-{lavage.id}
-            </p>
-          </div>
-        </td>
-      </tr>
-    ))}
-  </tbody>
-</table>
+        {/* ✅ Récapitulatif */}
+        <div className="mt-4 text-right font-bold text-lg">
+        <p className="font-bold text-lg">
+  <strong>Total :</strong> {lavage.tarif_total ? parseFloat(lavage.tarif_total).toFixed(2) : "Non défini"} FCFA
+</p>
 
+        </div>
 
-        {/* Bouton masqué lors de l'impression */}
+        {/* ✅ Bouton Imprimer */}
         <div className="mt-4 print:hidden text-center">
           <button
             onClick={handlePrintAndUpdate}
@@ -125,5 +155,5 @@ const Facture = () => {
   );
 };
 
-Facture.layout = (page) => <Layout children={page} />;
+
 export default Facture;

@@ -1,13 +1,13 @@
 import React from "react";
 import LayoutAdmin from "@/Layouts/LayoutAdmin";
-import Layout from "@/Layouts/Layout";
+
 
 function Admin() {
   return (
     <LayoutAdmin>
       
       {/* Titre principal de la page */}
-      <h1 className="text-2xl font-bold text-blue-600">Dashboard Admin</h1>
+      <h1 className="mt-20 text-2xl font-bold text-blue-600">Dashboard Admin</h1>
       <p className="mt-2 text-gray-600">
         Bienvenue ! Consultez un aperçu des lavages en cours ou accédez rapidement aux fonctionnalités principales.
       </p>
@@ -52,6 +52,6 @@ function Admin() {
   );
 }
 
-Admin.layout = (page) => <Layout children={page}/>
+
 
 export default Admin;

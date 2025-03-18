@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm, usePage } from '@inertiajs/react';
 import LayoutAdmin from '@/Layouts/LayoutAdmin';
-import Layout from '@/Layouts/Layout';
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -93,5 +92,5 @@ function AjoutActeur() {
   );
 }
 
-AjoutActeur.layout = (page) => <Layout children={page} />;
+
 export default AjoutActeur;

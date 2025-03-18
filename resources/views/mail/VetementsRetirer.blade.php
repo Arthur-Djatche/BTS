@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Vos vêtements sont prêts</title>
+    <title>Retrait valider</title>
     <style>
         /* Styles basiques compatibles pour les emails */
         body {
@@ -57,8 +57,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Bonjour, {{ $lavage['client']['nom'] }} {{ $lavage['client']['prenom'] }}</h1>
-        <p>Nous avons le plaisir de vous informer que vos vêtements du lavage {{ $lavage['id'] }} sont prêts. Vous pouvez venir les récupérer à tout moment.</p>
+        <h1>Bonjour, {{ $lavageRetirer['client']['nom'] }}</h1>
+        <p>Nous avons le plaisir de vous informer que vos vêtements du lavage {{ $lavageRetirer['id'] }} ont été retirés avec succes.</p>
 
 
 

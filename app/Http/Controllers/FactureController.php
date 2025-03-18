@@ -24,18 +24,25 @@ class FactureController extends Controller
         $structure = Structure::where('id', $acteur->structure_id)->first();
 
         if (!$lavage) {
-            return redirect()->route('etat_lavage')->with('error', 'Lavage non trouvé.');
+            return redirect()->route('etat-lavage')->with('error', 'Lavage non trouvé.');
         }
 
         return Inertia::render('Facture', [
-            'lavage' => $lavage,
+            'lavage' => $lavage->load([
+                'client',
+                'vetements.categorie',
+                'vetements.type',
+                'consigne', // 🔥 Ici on retourne la consigne complète !
+                'receptionniste',
+            ]),
+            'message' => '✅ Lavage enregistré avec succès !',
             'acteur' => $acteur,
-        'structure' => $structure ? [
-            'nom_structure' => $structure->nom_structure,
-            'telephone' => $structure->telephone,
-            'ville' => $structure->ville,
-            'email' => $structure->email,
-        ] : null, // ✅ Retourne `null` si aucune structure n'est trouvée
-    ]);
+            'structure' => $structure ? [
+                'nom_structure' => $structure->nom_structure,
+                'telephone' => $structure->telephone,
+                'ville' => $structure->ville,
+                'email' => $structure->email,
+            ] : null, 
+        ]);
     }
 }

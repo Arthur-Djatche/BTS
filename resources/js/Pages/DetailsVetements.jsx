@@ -1,7 +1,7 @@
 import React from "react";
 import { Inertia } from "@inertiajs/inertia";
 import { usePage } from "@inertiajs/react";
-import Layout from "@/Layouts/Layout";
+
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
 
 const DetailsVetements = () => {
@@ -68,6 +68,6 @@ const DetailsVetements = () => {
   );
 };
 
-DetailsVetements.layout = (page) => <Layout children={page} />;
+
 
 export default DetailsVetements;

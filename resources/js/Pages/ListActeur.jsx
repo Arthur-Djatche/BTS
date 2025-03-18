@@ -3,7 +3,6 @@ import { FaEdit, FaTrash, FaSync } from "react-icons/fa";
 import { usePage } from "@inertiajs/react";
 import { Inertia } from "@inertiajs/inertia";
 import LayoutAdmin from "@/Layouts/LayoutAdmin";
-import Layout from "@/Layouts/Layout";
 
 function ListActeur() {
   const { acteurs } = usePage().props; // Récupérer les acteurs depuis les props d'Inertia
@@ -74,7 +73,7 @@ function ListActeur() {
 
   return (
     <LayoutAdmin>
-    <div className="min-h-screen flex flex-col items-center bg-gray-100 p-6">
+    <div className="mt-20 min-h-screen flex flex-col items-center bg-gray-100 p-6">
       <h2 className="text-2xl font-bold text-gray-800 mb-6">Liste des Acteurs</h2>
       
       {/* Barre de recherche */}
@@ -150,5 +149,5 @@ function ListActeur() {
 }
 
 
-ListActeur.layout = (page) => <Layout children={page} />;
+
 export default ListActeur;

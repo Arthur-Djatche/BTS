@@ -1,6 +1,5 @@
 import React from "react";
 import LayoutRepasseur from "@/Layouts/LayoutRepasseur";
-import Layout from "@/Layouts/Layout";
 
 function DashboardRepasseur() {
   return (
@@ -52,6 +51,6 @@ function DashboardRepasseur() {
   );
 }
 
-DashboardRepasseur.layout = (page) => <Layout children={page}/>
+
 
 export default DashboardRepasseur;

@@ -8,7 +8,8 @@ return new class extends Migration {
     {
         Schema::create('types', function (Blueprint $table) {
             $table->id();
-            $table->string('nom');
+            $table->string('nom')->unique();
+            $table->decimal('pourcentage_variation', 5, 2); // Ex: 10% => 0.10
             $table->foreignId('structure_id')->constrained()->onDelete('cascade');
             $table->timestamps();
         });

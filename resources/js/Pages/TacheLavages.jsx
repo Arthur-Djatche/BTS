@@ -2,36 +2,44 @@ import React, { useState } from "react";
 import { usePage } from "@inertiajs/react"; // Pour récupérer les données injectées depuis Laravel
 import { Inertia } from "@inertiajs/inertia"; // Pour gérer les requêtes via Inertia
 import LayoutLaveur from "@/Layouts/LayoutLaveur"; // Layout personnalisé pour les Laveur
-import Layout from "@/Layouts/Layout";
 
 const TacheLavages = () => {
-  // Récupérer les données injectées via Inertia
   const { vetements } = usePage().props;
 
-  // Fonction pour mettre à jour l’état d’un vêtement
-  const handleMarkAsFinished = (vetementId) => {
-    // Envoyer une requête pour mettre à jour l’état du vêtement
-    Inertia.patch(`/vetements/${vetementId}/update-etat`, { etat: "En repassage" }, {
+  const handleMarkAsFinished = (vetementId, typeConsigne) => {
+    if (!typeConsigne) {
+      alert("❌ Erreur : Type de consigne inconnu !");
+      return;
+    }
+  
+    const nouvelEtat = typeConsigne === "Lavage_Simple" ? "Terminé" : "En repassage";
+  
+    console.log("🔄 Envoi de la requête :", { vetementId, nouvelEtat, typeConsigne });
+  
+    Inertia.patch(`/vetements/${vetementId}/update-etat`, { 
+      etat: nouvelEtat,
+      type_consigne: typeConsigne
+    }, {
       onSuccess: () => {
-        alert("Vêtement mis à jour avec succès !");
+        alert(`✅ Vêtement mis à jour à l'état : ${nouvelEtat}`);
       },
       onError: (errors) => {
-        console.error(errors);
-        alert("Une erreur s'est produite lors de la mise à jour.");
+        console.error("❌ Erreur :", errors);
+        alert("Une erreur est survenue.");
       },
     });
   };
+  
 
-  // Filtrer les vêtements qui sont "En lavage"
+
+  // Filtrer les vêtements "En lavage"
   const vetementsEnLavage = vetements.filter((vetement) => vetement.etat === "En lavage");
 
   return (
     <LayoutLaveur>
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        {/* Titre */}
+      <div className="mt-0 p-6 bg-white rounded-lg shadow-md">
         <h1 className="text-2xl font-bold text-blue-600 mb-6">Tâches en Lavage</h1>
 
-        {/* Vérification s'il y a des vêtements en lavage */}
         {vetementsEnLavage.length === 0 ? (
           <p className="text-gray-500">Aucun vêtement n'est actuellement en lavage.</p>
         ) : (
@@ -41,6 +49,7 @@ const TacheLavages = () => {
                 <th className="border px-4 py-2">Catégorie</th>
                 <th className="border px-4 py-2">Type</th>
                 <th className="border px-4 py-2">Couleur</th>
+                <th className="border px-4 py-2">Consigne</th>
                 <th className="border px-4 py-2">Action</th>
               </tr>
             </thead>
@@ -50,15 +59,20 @@ const TacheLavages = () => {
                   <td className="border px-4 py-2">{vetement.categorie.nom}</td>
                   <td className="border px-4 py-2">{vetement.type.nom}</td>
                   <td className="border px-4 py-2">
-                    <div
-                      className="w-6 h-6 rounded-full"
-                      style={{ backgroundColor: vetement.couleur }}
-                    ></div>
+                    <div className="w-6 h-6 rounded-full" style={{ backgroundColor: vetement.couleur }} />
+                  </td>
+                  <td className="border px-4 py-2 text-red-500">
+                    {vetement.lavage?.consigne?.nom || "Non spécifié"}
                   </td>
                   <td className="border px-4 py-2">
-                    {/* Bouton pour marquer comme terminé */}
                     <button
-                      onClick={() => handleMarkAsFinished(vetement.id)}
+                      onClick={() => {
+                        if (vetement.lavage?.consigne?.type_consigne) {
+                          handleMarkAsFinished(vetement.id, vetement.lavage.consigne.type_consigne);
+                        } else {
+                          alert("Erreur : Aucune consigne associée !");
+                        }
+                      }}
                       className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none focus:ring-2 focus:ring-green-300"
                     >
                       Terminé
@@ -74,5 +88,4 @@ const TacheLavages = () => {
   );
 };
 
-TacheLavages.layout = (page) => <Layout children={page}/>
 export default TacheLavages;

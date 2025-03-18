@@ -16,7 +16,7 @@ class CreateActeursTable extends Migration
         Schema::create('acteurs', function (Blueprint $table) {
             $table->id(); // Clé primaire
             $table->string('nom')->nullable();; // Champ nom
-            $table->string('prenom')->nullable();; // Champ prénom
+            $table->string('prenom')->nullable(); // Champ prénom
             $table->string('email')->unique(); // Email unique
             $table->string('telephone')->nullable(); // Téléphone optionnel
             $table->string('password'); // Mot de passe

@@ -4,7 +4,6 @@ import { Inertia } from "@inertiajs/inertia";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { FaTshirt, FaUser, FaUserTie, FaPalette, FaClock, FaBan, FaSearch, FaQrcode } from "react-icons/fa";
 import LayoutAdmin from "@/Layouts/LayoutAdmin";
-import Layout from "@/Layouts/Layout";
 
 const Tracabilite = () => {
   const { vetement, error } = usePage().props;
@@ -54,7 +53,7 @@ const Tracabilite = () => {
 
   return (
     <LayoutAdmin>
-    <div className="p-6 bg-white rounded-lg shadow-md max-w-xl mx-auto">
+    <div className="mt-20 p-6 bg-white rounded-lg shadow-md max-w-xl mx-auto">
       <h1 className="text-2xl font-bold text-blue-600 text-center mb-4 flex items-center justify-center gap-2">
         <FaSearch /> 📍 Traçabilité des Vêtements
       </h1>
@@ -130,5 +129,5 @@ const Tracabilite = () => {
     </LayoutAdmin>
   );
 };
-Tracabilite.layout = (page) => <Layout children={page} />;
+
 export default Tracabilite;
