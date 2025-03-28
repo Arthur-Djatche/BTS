@@ -3,11 +3,16 @@
 namespace App\Http\Controllers;
 use App\Models\Vetement;
 use App\Models\Lavage;
+use App\Models\Client;
+use App\Models\Categorie;
+use App\Models\Type;
+use App\Models\Consigne;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Mail\VetementsRetirerMail;
 use Illuminate\Support\Facades\Mail;
+use Carbon\Carbon;
 
 
 class LavageController extends Controller
@@ -39,6 +44,34 @@ class LavageController extends Controller
         'lavages' => $lavages,
     ]);
 }
+public function index_etiquetage()
+{
+    $receptionniste = Auth::guard('web')->user(); 
+
+    if (!$receptionniste || $receptionniste->role !== 'receptionniste') {
+        return redirect('/')->withErrors('Aucun réceptionniste connecté.');
+    }
+
+    $structureId = $receptionniste->structure_id;
+
+    // 🔥 Récupérer les lavages avec leurs vêtements en état "Etiquetage"
+    $lavages = Lavage::with(['vetements' => function ($query) {
+            $query->where('etat', 'etiquettage')->with('categorie', 'type');
+        }])
+        ->where(function ($query) use ($receptionniste, $structureId) {
+            $query->where('receptionniste_id', $receptionniste->id)
+                  ->orWhereHas('receptionniste', function ($query) use ($structureId) {
+                      $query->where('structure_id', $structureId);
+                  });
+        })
+        ->get();
+
+    return inertia('Etiquetage', [
+        'lavages' => $lavages,
+    ]);
+}
+
+
 
 public function updateEmplacement(Request $request, $id)
 {
@@ -138,4 +171,49 @@ public function verifierCodeRetrait(Request $request)
         return response()->json(['valid' => false, 'message' => "Code incorrect."], 200);
     }
 }
+public function edit($id)
+{
+    $lavage = Lavage::with(['client', 'vetements'])->findOrFail($id);
+    return inertia('EditLavage', [
+        'lavage' => $lavage,
+        'clients' => Client::all(),
+        'categories' => Categorie::all(),
+        'types' => Type::all(),
+        'consignes' => Consigne::all(),
+    ]);
+}
+
+public function update(Request $request, $id)
+{
+    $lavage = Lavage::findOrFail($id);
+    $lavage->update([
+        'client_id' => $request->client_id,
+        'consigne_id' => $request->consigne_id,
+        'kilogrammes' => $request->kilogrammes,
+        'status' => 'Non Payé',
+    ]);
+
+    foreach ($request->vetements as $vetementData) {
+        // Vérifier et formater les dates avant mise à jour
+        if (isset($vetementData['created_at'])) {
+            $vetementData['created_at'] = Carbon::parse($vetementData['created_at'])->format('Y-m-d H:i:s');
+        }
+        if (isset($vetementData['updated_at'])) {
+            $vetementData['updated_at'] = Carbon::parse($vetementData['updated_at'])->format('Y-m-d H:i:s');
+        }
+
+        Vetement::where('id', $vetementData['id'])->update($vetementData);
+    }
+
+    return redirect()->route('lavage.edit', $id)->with('success', 'Lavage mis à jour.');
+}
+public function toggleStatus($id)
+{
+    $lavage = Lavage::findOrFail($id);
+    $lavage->status = $lavage->status === 'Payé' ? 'Non Payé' : 'Payé';
+    $lavage->save();
+
+    return back()->with('success', 'Statut mis à jour.');
+}
+
 }

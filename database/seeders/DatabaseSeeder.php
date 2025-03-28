@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-// use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Acteur;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -13,11 +13,17 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        // ✅ Créer le Super Admin s'il n'existe pas déjà
+        Acteur::firstOrCreate([
+            'email' => env('SUPER_ADMIN_EMAIL', 'wdows280@gmail.com'),
+        ], [
+            'nom' => 'Super',
+            'prenom' => 'Admin',
+            'telephone' => '697161277', // Valeur par défaut, modifiable
+            'password' => Hash::make(env('SUPER_ADMIN_PASSWORD', 'superadminpassword')),
+            'role' => 'super_admin',
+            'actif' => true, // ✅ Activer le compte Super Admin
+            'structure_id' => null, // ✅ Assurer que le Super Admin n'est rattaché à aucune structure
         ]);
     }
 }

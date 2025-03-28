@@ -2,68 +2,70 @@
 
 namespace App\Services;
 
-use GuzzleHttp\Client;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
 
 class OrangeSmsService
 {
-    protected $client;
-    protected $token;
+    private $clientId;
+    private $clientSecret;
+    private $authHeader;
+    private $senderNumber;
+    private $senderName;
+    private $accessToken;
 
     public function __construct()
     {
-        $this->client = new Client();
+        $this->clientId = env('ORANGE_SMS_CLIENT_ID');
+        $this->clientSecret = env('ORANGE_SMS_CLIENT_SECRET');
+        $this->authHeader = env('ORANGE_SMS_AUTH_HEADER');
+        $this->senderNumber = env('ORANGE_SMS_SENDER_NUMBER');
+        $this->senderName = env('ORANGE_SMS_SENDER_NAME');
+        $this->accessToken = $this->getAccessToken(); // Génère le token automatiquement
     }
 
-    // 🔥 1. Récupérer le token d’authentification
-    public function getAccessToken()
+    /**
+     * 📌 Récupérer le token d'accès OAuth 2.0
+     */
+    private function getAccessToken()
     {
-        try {
-            $response = $this->client->post(config('services.orange_sms.api_url'), [
-                'auth' => [
-                    config('services.orange_sms.client_id'),
-                    config('services.orange_sms.client_secret'),
-                ],
-                'form_params' => ['grant_type' => 'client_credentials'],
-            ]);
+        $response = Http::withHeaders([
+            'Authorization' => $this->authHeader,
+            'Content-Type' => 'application/x-www-form-urlencoded',
+            'Accept' => 'application/json',
+        ])->asForm()->post('https://api.orange.com/oauth/v3/token', [
+            'grant_type' => 'client_credentials',
+        ]);
 
-            $data = json_decode($response->getBody(), true);
-            return $data['access_token'] ?? null;
-        } catch (\Exception $e) {
-            Log::error("Erreur lors de la récupération du token : " . $e->getMessage());
-            return null;
+        if ($response->successful()) {
+            return $response->json()['access_token'];
         }
+
+        throw new \Exception("Erreur lors de la récupération du token Orange: " . $response->body());
     }
 
-    // 🔥 2. Envoyer un SMS
+    /**
+     * 📌 Envoyer un SMS via l'API Orange
+     */
     public function sendSms($recipient, $message)
     {
-        $this->token = $this->getAccessToken();
-        if (!$this->token) {
-            return ['error' => 'Impossible de récupérer le token.'];
+        $response = Http::withHeaders([
+            'Authorization' => "Bearer " . $this->accessToken,
+            'Content-Type' => 'application/json',
+        ])->post("https://api.orange.com/smsmessaging/v1/outbound/tel%3A%2B$this->senderNumber/requests", [
+            "outboundSMSMessageRequest" => [
+                "address" => "tel:+$recipient",
+                "senderAddress" => "tel:+$this->senderNumber",
+                "senderName" => $this->senderName,
+                "outboundSMSTextMessage" => [
+                    "message" => $message,
+                ],
+            ],
+        ]);
+
+        if ($response->successful()) {
+            return $response->json();
         }
 
-        try {
-            $sender = config('services.orange_sms.sender');
-
-            $response = $this->client->post(str_replace("{sender}", $sender, config('services.orange_sms.sms_url')), [
-                'headers' => [
-                    'Authorization' => "Bearer " . $this->token,
-                    'Content-Type' => 'application/json',
-                ],
-                'json' => [
-                    'outboundSMSMessageRequest' => [
-                        'address' => "tel:+$recipient",
-                        'senderAddress' => "tel:+$sender",
-                        'outboundSMSTextMessage' => ['message' => $message],
-                    ],
-                ],
-            ]);
-
-            return json_decode($response->getBody(), true);
-        } catch (\Exception $e) {
-            Log::error("❌ Erreur lors de l'envoi du SMS : " . $e->getMessage());
-            return ['error' => 'Échec de l’envoi du SMS', 'message' => $e->getMessage()];
-        }
+        throw new \Exception("Erreur lors de l'envoi du SMS: " . $response->body());
     }
 }

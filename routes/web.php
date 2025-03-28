@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminDashboardController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -24,7 +25,9 @@ use App\Http\Controllers\TypeController;
 use App\Http\Controllers\KilogrammesController;
 use App\Http\Controllers\ConsigneController;
 use App\Http\Middleware\ProtectMiddleware;
-
+use App\Http\Controllers\StructureDashboardController;
+use App\Http\Controllers\SuperDashboardController;
+use App\Http\Middleware\SuperAdminMiddleware;
 
 Route::get('/login/structure', [AuthController::class, 'showStructureLogin'])->name('structure.login');
 Route::get('/login/acteurs', [AuthController::class, 'showActeursLogin'])->name('acteurs.login');
@@ -106,6 +109,12 @@ Route::get('/AjoutClient', function () {
     return Inertia::render('AjoutClient');
 });
 
+Route::get('/super', [SuperDashboardController::class, 'index'])
+    ->middleware(SuperAdminMiddleware::class)
+    ->name('Super');
+
+Route::get('/structure/dashboard', [StructureDashboardController::class, 'index'])->name('structure.dashboard');
+
 // Route::get('/receptionniste/nouveau-lavage', function(){
 //     return Inertia::render('NouveauLavage');
 // });
@@ -150,6 +159,7 @@ Route::get('/receptionniste/factures/{id}', [FactureController::class, 'show'])-
    
     
     Route::get('/receptionniste/etat-lavage', [LavageController::class, 'index'])->name('etat-lavage'); // Liste des lavages
+    Route::get('/receptionniste/etiquetage', [LavageController::class, 'index_etiquetage'])->name('etiquetage'); // Liste des lavages
     Route::post('/lavages/{lavage}/retirer', [LavageController::class, 'retirer']); // Retirer un lavage
     Route::get('/lavages/{lavage}/details', [LavageController::class, 'details']); // Détails d'un lavage
     Route::post('/vetements/{vetement}/retirer', [VetementController::class, 'retirer']); // Retirer un vêtement
@@ -293,3 +303,30 @@ use App\Services\OrangeSmsService;
 
 Route::get('/send-sms', [SmsController::class, 'index'])->name('sms.index');
 Route::post('/send-sms', [SmsController::class, 'sendSms'])->name('sms.send');
+
+use App\Http\Controllers\SuperAdmin\AbonnementController;
+
+
+
+
+    Route::get('/structures-list', [AbonnementController::class, 'index'])->name('superadmin.abonnements');
+    Route::get('/abonnements', [AbonnementController::class, 'index_abonnement'])->name('abo');
+    Route::post('/abonnements', [AbonnementController::class, 'store']);
+    Route::patch('/structures/{structure}/abonnement', [AbonnementController::class, 'assignerAbonnement']);
+    Route::patch('/structures/{structure}/toggle', [AbonnementController::class, 'toggleActivation']);
+
+    Route::patch('/abonnements/{id}', [AbonnementController::class, 'update'])->name('abonnements.update'); // Modification
+    Route::patch('/abonnements/{id}/disable', [AbonnementController::class, 'disable'])->name('abonnements.disable'); // Désactivation
+    Route::patch('/abonnements/{id}/restore', [AbonnementController::class, 'restore'])->name('abonnements.restore'); // Restauration
+
+    Route::get('/receptionniste/lavage/{id}/edit', [LavageController::class, 'edit'])->name('lavage.edit');
+    Route::put('/receptionniste/lavage/{id}', [LavageController::class, 'update'])->name('lavage.update');
+
+    Route::post('/lavages/{id}/toggle-status', [LavageController::class, 'toggleStatus']);
+
+    Route::post('/vetements/renvoyer', [VetementController::class, 'renvoyer']);
+
+    
+
+Route::post('/update-etat-vetements', [VetementController::class, 'updateEtiquete']);
+

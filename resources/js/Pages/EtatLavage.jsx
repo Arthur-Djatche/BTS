@@ -23,8 +23,9 @@ const getEtatLavage = (vetements) => {
   }
   const allBegin = vetements.every((vetement) => vetement.etat ==="Initial");
   if (allBegin) {
-    return "ImprimerFacture";
+    return "non Confirmé";
   }
+ 
 
   // Vérifie si tous les vêtements sont dans l'état "Terminé"
   const allFinished = vetements.every((vetement) => vetement.etat === "Terminé");
@@ -171,6 +172,11 @@ const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les inf
     return () => scanner.clear();
   }
 }, [mode, showModal]);
+
+const handleEditer = (e, lavageId) => {
+  e.stopPropagation();
+  Inertia.visit(`/receptionniste/lavage/${lavageId}/edit`);
+};
   
   
 
@@ -183,14 +189,14 @@ const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les inf
         {/* Barre de recherche */}
         <div className="mb-6">
           <label htmlFor="search" className="block text-blue-600 font-medium mb-2">
-            Rechercher un lavage par ID
+            Rechercher un lavage par Numero
           </label>
           <input
             type="text"
             id="search"
             value={searchTerm}
             onChange={handleSearch}
-            placeholder="Entrez l'ID du lavage..."
+            placeholder="Entrez le N° du lavage..."
             className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -199,7 +205,7 @@ const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les inf
         <table className="w-full text-left border-collapse border border-gray-300">
           <thead>
             <tr>
-              <th className="border px-4 py-2">ID Lavage</th>
+              <th className="border px-4 py-2">N° Lavage</th>
               <th className="border px-4 py-2">Nom Client</th>
               <th className="border px-4 py-2">État</th>
               <th className="border px-4 py-2">Actions</th>
@@ -236,7 +242,7 @@ const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les inf
                       </button>
                       
                     )}
-                    {etat === "ImprimerFacture" && (
+                    {etat === "non Confirmé" && (
   <button
     onClick={(e) => {
       handleFacture(e, lavage.id);
@@ -245,6 +251,19 @@ const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les inf
   >
     Imprimer Facture
   </button>
+  
+)}
+                  {etat === "non Confirmé" && (
+  <button
+  onClick={(e) => {
+    handleEditer(e, lavage.id);
+  }
+  }
+  className="ml-10 bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500 focus:outline-none"
+>
+  Éditer
+</button>
+
 )}
 
                   </td>

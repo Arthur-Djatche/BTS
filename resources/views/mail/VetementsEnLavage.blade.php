@@ -57,9 +57,11 @@
 </head>
 <body>
     <div class="container">
-        <h1>Bonjour, {{ $lavage['client']['nom'] }}</h1>
-        <p>Nous avons le plaisir de vous informer que vos vêtements ont été mis en lavage avec succès.</p>
-
+        <h1>Cher(e), {{ $lavage['client']['nom'] }} {{ $lavage['client']['prenom'] }}</h1>
+        <p>Nous avons le plaisir de vous informer que vos vêtements ont été reçu avec succès.</p>
+        <P> Kilogramme(s)Kg:0 {{ $lavage['kilogrammes'] }} </P>
+        <P> TOTAL: {{ $lavage['tarif_total'] }} FCFA </P>
+        <P> CONSIGNES : {{ $lavage['consigne']['type_consigne'] }} {{ $lavage['consigne']['priorite_consigne'] }}--{{ $lavage['consigne']['nom'] }}</P>
         <ul>
             @foreach ($lavage['vetements'] as $vetement)
                 <li>

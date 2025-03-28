@@ -57,9 +57,8 @@
 </head>
 <body>
     <div class="container">
-        <h1>Bonjour, {{ $lavageRetirer['client']['nom'] }}</h1>
-        <p>Nous avons le plaisir de vous informer que vos vêtements du lavage {{ $lavageRetirer['id'] }} ont été retirés avec succes.</p>
-
+        <h1>Bonjour, {{ $lavage->client->nom }}</h1>
+    <p>Nous avons le plaisir de vous informer que vos vêtements du lavage N° {{ $lavage->id }} ont été retirés avec succès.</p>
 
 
         <p class="footer">Merci de nous avoir fait confiance. À très bientôt !</p>

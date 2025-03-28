@@ -3,6 +3,11 @@ import QRCode from "react-qr-code";
 import { usePage } from "@inertiajs/react";
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
 import { Inertia } from "@inertiajs/inertia";
+import { router } from "@inertiajs/react"; // ✅ Import correct
+import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
+
+
+
 
 const Facture = () => {
   const { lavage, structure, acteur } = usePage().props;
@@ -14,12 +19,22 @@ const Facture = () => {
   }
 
   const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString("fr-FR", {
+    return new Date(dateString).toLocaleString("fr-FR", {
       year: "numeric",
       month: "long",
       day: "numeric",
+      hour: "numeric",
+      minute: "numeric",
+      second: "numeric",
     });
   };
+
+  const togglePaymentStatus = () => {
+    router.post(`/lavages/${lavage.id}/toggle-status`, {}, {
+        preserveScroll: true,
+        onSuccess: () => console.log("Statut mis à jour !")
+    });
+};
 
   const handlePrintAndUpdate = () => {
     if (!lavage || !lavage.vetements) {
@@ -71,23 +86,26 @@ const Facture = () => {
               <p><strong>Date :</strong> {formatDate(lavage.created_at)}</p>
               <p><strong>Client :</strong> {lavage.client.nom} {lavage.client.prenom}</p>
               <p><strong>Email :</strong> {lavage.client.email}</p>
-              <p><strong>No Lavage :</strong> {lavage.id}</p>
+              <p><strong>Lavage N°:</strong> {lavage.id}</p>
               <p><strong>Réceptionné par :</strong> {acteur.nom} {acteur.prenom}</p>
+              <p><strong>Kilogramme(s) (Kg) :</strong> {lavage?.kilogrammes || "non facturé"}  </p>
               
-              {/* ✅ Vérification de consigne avant affichage */}
-              <p>
-                <strong>Consigne :</strong> {lavage.consigne?.nom || "Non spécifié"} 
-                ({lavage.consigne?.pourcentage_variation || 0}%)
+             {/* ✅ Mise en avant de la consigne */}
+             <p className="text-lg font-semibold text-red-600">
+                <strong>Consigne :</strong> {lavage.consigne?.nom || "Non spécifié"} -{" "}
+                {lavage.consigne.type_consigne}---{lavage.consigne.priorite_consigne} ({lavage.consigne?.pourcentage_variation || 0}%)
               </p>
-
-              <p><strong>Total :</strong> {parseFloat(lavage.tarif_total).toFixed(2)} FCFA</p>
+{/* ✅ Mise en avant du total */}
+<p className="text-xl font-bold text-blue-600 mt-2">
+                <strong>Total :</strong> {parseFloat(lavage.tarif_total).toFixed(2)} FCFA
+              </p>
 
             </div>
 
             {/* ✅ QR Code Code Retrait */}
             <div className="ml-4">
               <QRCode value={lavage.code_retrait.toString()} size={90} />
-              <p className="text-center mt-2 text-gray-700 font-bold">Code Retrait</p>
+              {/* <p className="text-center mt-2 text-gray-700 font-bold">Code Retrait</p> */}
             </div>
           </div>
         </div>
@@ -135,12 +153,25 @@ const Facture = () => {
 
         {/* ✅ Récapitulatif */}
         <div className="mt-4 text-right font-bold text-lg">
-        <p className="font-bold text-lg">
-  <strong>Total :</strong> {lavage.tarif_total ? parseFloat(lavage.tarif_total).toFixed(2) : "Non défini"} FCFA
-</p>
-
+          <p className="text-xl font-bold text-blue-600">
+            <strong>Total :</strong> {lavage.tarif_total ? parseFloat(lavage.tarif_total).toFixed(2) : "Non défini"} FCFA
+          </p>
         </div>
+         <button onClick={togglePaymentStatus} className="focus:outline-none">
+                    {lavage.status === "Payé" ? (
+                      <>
+                        <FaCheckCircle className="text-2xl text-green-500" />
+                        <span className="text-green-500 font-semibold">Payé</span> 
+                      </>
 
+                    ) : (
+                      <>
+                        <FaTimesCircle className="text-2xl text-red-500" />
+                        <span className="text-red-500 font-semibold">Non Payé</span>
+                        
+                      </>
+                    )}
+                </button>
         {/* ✅ Bouton Imprimer */}
         <div className="mt-4 print:hidden text-center">
           <button
@@ -151,6 +182,7 @@ const Facture = () => {
           </button>
         </div>
       </div>
+
     </LayoutReceptionniste>
   );
 };

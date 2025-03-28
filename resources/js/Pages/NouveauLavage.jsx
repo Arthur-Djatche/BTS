@@ -171,7 +171,7 @@ const NouveauLavage = () => {
             <select className="w-full border px-4 py-2 rounded" value={selectedConsigne} onChange={(e) => setSelectedConsigne(e.target.value)}>
               <option value="">-- Sélectionner une consigne --</option>
               {consignes.map((consigne) => (
-                <option key={consigne.id} value={consigne.id}>{consigne.nom}</option>
+                <option key={consigne.id} value={consigne.id}>{consigne.nom}-{consigne.type_consigne}---{consigne.priorite_consigne}</option>
               ))}
             </select>
           </div>

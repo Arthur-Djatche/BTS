@@ -26,4 +26,20 @@ class Structure extends Authenticatable
     
 
     }
+    public function lavages()
+{
+    return $this->hasManyThrough(
+        Lavage::class,
+        Acteur::class,
+        'structure_id', // Foreign key sur la table `acteurs`
+        'receptionniste_id', // Foreign key sur la table `lavages`
+        'id', // Primary key sur la table `structures`
+        'id'  // Primary key sur la table `acteurs`
+    );
+}
+public function abonnement()
+{
+    return $this->belongsTo(Abonnement::class);
+}
+
 }

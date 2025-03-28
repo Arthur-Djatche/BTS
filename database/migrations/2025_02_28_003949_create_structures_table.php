@@ -19,12 +19,13 @@ return new class extends Migration {
 
         // Ajouter la colonne structure_id dans acteurs
         Schema::table('acteurs', function (Blueprint $table) {
-            $table->foreignId('structure_id')->constrained('structures')->onDelete('cascade');
+            $table->foreignId('structure_id')->constrained('structures')->onDelete('cascade')->nullable();
         });
         // Ajouter la colonne structure_id dans client
         Schema::table('clients', function (Blueprint $table) {
             $table->foreignId('structure_id')->constrained('structures')->onDelete('cascade');
         });
+        
     }
 
     public function down(): void

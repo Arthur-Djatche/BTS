@@ -20,22 +20,21 @@ function LayoutReceptionniste({ children }) {
   return (
     <div className="flex flex-col md:flex-row h-screen bg-gray-100">
 
-      {/* ✅ Bouton Menu Burger pour Mobile */}
+      {/* ✅ Bouton Menu Burger pour Mobile (Masqué en impression) */}
       <button 
-        className="md:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-2 rounded-lg shadow-md"
+        className="md:hidden fixed top-4 left-4 z-50 bg-blue-600 text-white p-2 rounded-lg shadow-md print:hidden"
         onClick={() => setSidebarOpen(!isSidebarOpen)}
       >
         {isSidebarOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
       </button>
 
-      {/* ✅ Sidebar (Menu latéral) */}
+      {/* ✅ Sidebar (Masqué en impression) */}
       <aside 
-        className={`fixed md:static top-0 left-0 h-full w-64 bg-blue-700 text-white flex flex-col p-6 transition-transform duration-300 shadow-lg ${
+        className={`fixed md:static top-0 left-0 h-full w-64 bg-blue-700 text-white flex flex-col p-6 transition-transform duration-300 shadow-lg print:hidden ${
           isSidebarOpen ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
-        {/* ✅ Titre avec une icône */}
-        <div className="mt-20 flex items-center justify-between border-b pb-4 mb-4 mt-10">
+        <div className="mt-20 flex items-center justify-between border-b pb-4 mb-4">
           <h2 className="text-2xl font-bold flex items-center gap-2">
             <FaTshirt /> Réceptionniste
           </h2>
@@ -69,10 +68,18 @@ function LayoutReceptionniste({ children }) {
           >
             <FaList /> État Lavage
           </Link>
+          <Link
+            href="/receptionniste/etiquetage"
+            className={`flex items-center gap-3 px-4 py-3 rounded-md ${
+              url === "/receptionniste/etiquetage" ? "bg-blue-500" : "hover:bg-blue-500"
+            }`}
+          >
+            <FaList /> Étiquetage
+          </Link>
         </nav>
 
-        {/* ✅ Bouton Déconnexion */}
-        <div className="mt-auto pt-6">
+        {/* ✅ Bouton Déconnexion (Masqué en impression) */}
+        <div className="mt-auto pt-6 print:hidden">
           <button
             onClick={() => setShowModal(true)}
             className="flex items-center gap-3 bg-red-600 px-4 py-3 rounded-md hover:bg-red-700 w-full"
@@ -82,11 +89,11 @@ function LayoutReceptionniste({ children }) {
         </div>
       </aside>
 
-      {/* ✅ Contenu Principal avec Header */}
+      {/* ✅ Contenu Principal */}
       <div className="flex flex-col flex-1 min-h-screen">
         
-        {/* ✅ Header (Barre du haut) */}
-        <div className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md border-b border-blue-700 z-40">
+        {/* ✅ Header (Masqué en impression) */}
+        <div className="fixed top-0 left-0 w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-md border-b border-blue-700 z-40 print:hidden">
           <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
             
             {/* ✅ Logo ou icône de l'entreprise */}
@@ -141,15 +148,15 @@ function LayoutReceptionniste({ children }) {
           </div>
         </div>
 
-        {/* ✅ Contenu Principal (Décalé sous le header) */}
-        <main className="flex-1 pt-20 p-6 overflow-auto">
+        {/* ✅ Contenu Principal (Seul élément imprimé) */}
+        <main className="flex-1 pt-20 p-6 overflow-auto print:block print:pt-0 print:p-0">
           {children}
         </main>
       </div>
 
-      {/* ✅ Modale de confirmation de déconnexion */}
+      {/* ✅ Modale de confirmation de déconnexion (Masqué en impression) */}
       {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center z-50 print:hidden">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Confirmation de déconnexion
@@ -174,6 +181,22 @@ function LayoutReceptionniste({ children }) {
           </div>
         </div>
       )}
+
+      {/* ✅ Styles pour impression */}
+      <style>
+        {`
+          @media print {
+            .print:hidden {
+              display: none !important;
+            }
+            .print:block {
+              display: block !important;
+              width: 100% !important;
+              height: auto !important;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 }

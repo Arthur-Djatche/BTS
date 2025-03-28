@@ -19,7 +19,7 @@ class CreateVetementsTable extends Migration
 
           
 
-            $table->enum('etat', ['Initial', 'En lavage', 'En repassage', 'Terminé','Retiré'])
+            $table->enum('etat', ['Initial','etiquettage', 'En lavage', 'En repassage', 'Terminé','Retiré'])
                   ->default('Initial'); // Ajoute après la colonne 'couleur'
             $table->timestamps();
         });

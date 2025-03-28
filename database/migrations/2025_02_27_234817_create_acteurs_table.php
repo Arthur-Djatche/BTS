@@ -22,7 +22,7 @@ class CreateActeursTable extends Migration
             $table->string('password'); // Mot de passe
             $table->rememberToken();
             // Ajouter une colonne 'role' avec une valeur par défaut 'laveur'
-            $table->enum('role', ['admin', 'receptionniste', 'laveur', 'repasseur'])
+            $table->enum('role', ['super_admin','admin', 'receptionniste', 'laveur', 'repasseur'])
             
                   ->default('laveur');
             $table->timestamps(); // created_at et updated_at

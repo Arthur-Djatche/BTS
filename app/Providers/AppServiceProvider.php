@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use App\Services\OrangeSmsService;
+use App\Http\Middleware\SuperAdminMiddleware;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
 
         // Enregistrement du middleware "role"
         Route::aliasMiddleware('role', \App\Http\Middleware\CheckRole::class);
+        Route::aliasMiddleware('super_admin', SuperAdminMiddleware::class);
     }
 
     

@@ -46,6 +46,8 @@ public function showActeursLogin()
 
         // 🎯 Redirection en fonction du rôle
         switch ($acteur->role) {
+            case 'super_admin':
+                return redirect()->route('Super'); ;
             case 'repasseur':
                 return redirect()->route('Admin'); // Route pour admin
             case 'receptionniste':
