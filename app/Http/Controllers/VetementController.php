@@ -67,11 +67,11 @@ public function updateEtat(Request $request, $id, OrangeSmsService $smsService)
         Mail::to($client->email)->send(new VetementsPretsMail($lavage));
 
         // ✅ Envoi du SMS
-        // $message = "Cher(e) {$client->nom} {$client->prenom}, vos vêtements du lavage N° " . 
-        //     str_pad($lavage->id, 4, '0', STR_PAD_LEFT) . 
-        //     " sont prêts. Vous pouvez venir les récupérer.";
+        $message = "Cher(e) {$client->nom} {$client->prenom}, vos vêtements du lavage N° " . 
+            str_pad($lavage->id, 4, '0', STR_PAD_LEFT) . 
+            " sont prêts. Vous pouvez venir les récupérer.";
 
-        // $this->sendSmsSafe($smsService, $client->telephone, $message);
+        $this->sendSmsSafe($smsService, $client->telephone, $message);
     }
 
     // ✅ Vérifier si tous les vêtements sont "En lavage"
@@ -83,12 +83,12 @@ public function updateEtat(Request $request, $id, OrangeSmsService $smsService)
         Mail::to($client->email)->send(new VetementsEnLavageMail($lavage));
 
         // ✅ Envoi du SMS
-        // $message = "Cher(e) {$client->nom} {$client->prenom}, votre lavage N° " . 
-        //     str_pad($lavage->id, 4, '0', STR_PAD_LEFT) . 
-        //     " a été reçu avec succès. {$consigne->type_consigne} - {$consigne->priorite_consigne}. " .
-        //     "Code retrait : {$lavage->code_retrait}. Nous vous informerons lorsqu'ils seront prêts.";
+        $message = "Cher(e) {$client->nom} {$client->prenom}, votre lavage N° " . 
+            str_pad($lavage->id, 4, '0', STR_PAD_LEFT) . 
+            " a été reçu avec succès. {$consigne->type_consigne} - {$consigne->priorite_consigne}. " .
+            "Code retrait : {$lavage->code_retrait}. Nous vous informerons lorsqu'ils seront prêts.";
 
-        // $this->sendSmsSafe($smsService, $client->telephone, $message);
+        $this->sendSmsSafe($smsService, $client->telephone, $message);
     }
 
     // ✅ Vérifier si tous les vêtements sont "Retirés"
@@ -99,12 +99,12 @@ public function updateEtat(Request $request, $id, OrangeSmsService $smsService)
         // ✅ Envoi du mail
         Mail::to($client->email)->send(new VetementsRetirerMail($lavage));
 
-        // // ✅ Envoi du SMS
-        // $message = "Cher(e) {$client->nom} {$client->prenom}, vos vêtements du lavage N° " . 
-        //     str_pad($lavage->id, 4, '0', STR_PAD_LEFT) . 
-        //     " ont été retirés avec succès. Merci de votre confiance !";
+        // ✅ Envoi du SMS
+        $message = "Cher(e) {$client->nom} {$client->prenom}, vos vêtements du lavage N° " . 
+            str_pad($lavage->id, 4, '0', STR_PAD_LEFT) . 
+            " ont été retirés avec succès. Merci de votre confiance !";
 
-        // $this->sendSmsSafe($smsService, $client->telephone, $message);
+        $this->sendSmsSafe($smsService, $client->telephone, $message);
     }
 
     return redirect()->back()->with('success', 'État du vêtement mis à jour avec succès.');
@@ -170,7 +170,7 @@ public function indexLavage()
                     $subQuery->where('structure_id', $structureId);
                 })
                 ->whereHas('consigne', function ($query) { 
-                    $query->whereIn('type_consigne', ['Lavage_Simple']);
+                    $query->where('type_consigne', 'Lavage_Simple');
                 }) // Ajoute la condition sur type_consigne
                 ->get(),
         ]);
@@ -197,7 +197,7 @@ public function indexLavage()
                     $subQuery->where('structure_id', $structureId);
                 })
                 ->whereHas('consigne', function ($query) { 
-                    $query->whereIn('type_consigne', ['Lavage_Simple',]);
+                    $query->where('type_consigne', 'Lavage_Simple');
                 }) // Ajoute la condition sur type_consigne
                 ->get(),
         ]);
@@ -245,10 +245,10 @@ public function indexRepassage()
                 ->whereHas('receptionniste', function ($subQuery) use ($structureId) {
                     $subQuery->where('structure_id', $structureId);
                 })
-                ->whereHas('consigne', function ($query) { 
-                    $query->whereIn('type_consigne', ['Repassage_Simple', 'Lavage_Repassage']);
-                }) // Ajoute la condition sur type_consigne
-                ->get(),
+                ->whereHas('consigne', fn ($query) => 
+                $query->whereIn('type_consigne', ['Repassage_Simple', 'Lavage_Repassage'])
+            ) // ✅ Vérifie si la consigne est bien "Repassage_Simple" ou "Lavage_Repassage"
+            ->get(),
         ]);
     }
 
@@ -272,9 +272,9 @@ public function indexRepassage()
             ->whereHas('receptionniste', function ($subQuery) use ($structureId) {
                 $subQuery->where('structure_id', $structureId);
             })
-            ->whereHas('consigne', function ($query) { 
-                $query->whereIn('type_consigne', ['Repassage_Simple', 'Lavage_Repassage']);
-            })
+            ->whereHas('consigne', fn ($query) => 
+                $query->whereIn('type_consigne', ['Repassage_Simple', 'Lavage_Repassage'])
+            ) // ✅ Vérifie si la consigne est bien "Repassage_Simple" ou "Lavage_Repassage"
             ->get(),
     ]);
 }

@@ -215,5 +215,13 @@ public function toggleStatus($id)
 
     return back()->with('success', 'Statut mis à jour.');
 }
+public function destroy($id)
+{
+    $lavage = Lavage::findOrFail($id);
+    $lavage->vetements()->delete(); // Supprime tous les vêtements liés
+    $lavage->delete(); // Supprime le lavage
+
+    return redirect('/receptionniste/nouveau-lavage')->with('success', 'Lavage supprimé.');
+}
 
 }

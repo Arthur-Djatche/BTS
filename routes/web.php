@@ -329,4 +329,5 @@ use App\Http\Controllers\SuperAdmin\AbonnementController;
     
 
 Route::post('/update-etat-vetements', [VetementController::class, 'updateEtiquete']);
+Route::delete('/lavages/{id}', [LavageController::class, 'destroy']);
 

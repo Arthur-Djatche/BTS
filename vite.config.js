@@ -12,6 +12,8 @@ export default defineConfig({
     ],
     server: {
         port: 5173, // Ajoute le port pour éviter les conflits
+        host: '192.168.1.178',
+         port: 3000
     },
 
     build: {

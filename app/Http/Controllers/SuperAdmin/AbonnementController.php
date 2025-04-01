@@ -23,7 +23,7 @@ class AbonnementController extends Controller
     public function index_abonnement()
     {
     
-        $abonnements = Abonnement::all();
+        $abonnements = Abonnement::where('actif', 'O')->get();
 
         return Inertia::render('Abonnements', [
          

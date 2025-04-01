@@ -1,352 +1,403 @@
 import React, { useState, useEffect } from "react";
 import { Inertia } from "@inertiajs/inertia";
-import { Link } from "@inertiajs/inertia-react";
 import { usePage } from "@inertiajs/react";
-
 import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
-import Barcode from "react-barcode";
 import { router } from '@inertiajs/react';
+import { toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const NouveauLavage = () => {
-  const [nomClient, setNomClient] = useState("");
-  const [nombreVetements, setNombreVetements] = useState(1);
-  const [vetements, setVetements] = useState([{ categorie_id: "", type_id: "", couleur: "#000000" }]);
-  const [facture, setFacture] = useState(null); // Facture pour la deuxième étape
   const { clients, categories, types, consignes } = usePage().props;
-  const [isDropdownVisible, setDropdownVisible] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  
+  // États principaux
+  const [nomClient, setNomClient] = useState("");
   const [selectedClient, setSelectedClient] = useState(null);
-  const [filteredClients, setFilteredClients] = useState([]); // Liste filtrée des clients
+  const [filteredClients, setFilteredClients] = useState([]);
+  const [isDropdownVisible, setDropdownVisible] = useState(false);
   const [selectedConsigne, setSelectedConsigne] = useState("");
   const [useKilogramme, setUseKilogramme] = useState(false);
   const [kilogrammes, setKilogrammes] = useState("");
+  const [vetements, setVetements] = useState([{ 
+    categorie_id: "", 
+    type_id: "", 
+    couleur: "#000000",
+    quantite: 1 
+  }]);
   
+  // États pour la modale
+  const [showModal, setShowModal] = useState(false);
+  const [newClient, setNewClient] = useState({
+    nom: "",
+    prenom: "",
+    email: "",
+    telephone: "",
+  });
 
+  // Détection de la taille de l'écran
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  const handleClientSelect = (client) => {
-    setNomClient(client.nom); // Affiche le nom sélectionné dans le champ
-    setSelectedClient(client); // Stocke l'objet complet du client sélectionné
-    setDropdownVisible(false); // Masque la liste déroulante
-  };
-  
-  
-
+  // Gestion des clients
   const handleClientChange = (e) => {
     const input = e.target.value;
     setNomClient(input);
-  
-    // Filtrer les clients correspondants
-    const matches = clients.filter((client) =>
-      client.nom.toLowerCase().includes(input.toLowerCase())
+    setFilteredClients(
+      clients.filter(client => 
+        client.nom.toLowerCase().includes(input.toLowerCase()) ||
+        client.email.toLowerCase().includes(input.toLowerCase())
+      )
     );
-
-    setFilteredClients(matches); // Met à jour la liste déroulante
-    setDropdownVisible(true); // Affiche la liste déroulante
+    setDropdownVisible(true);
   };
-  
-  
 
+  const handleClientSelect = (client) => {
+    setNomClient(`${client.nom} (${client.email})`);
+    setSelectedClient(client);
+    setDropdownVisible(false);
+  };
 
-   // État pour la fenêtre modale d'ajout de client
-   const [showModal, setShowModal] = useState(false);
-   const [newClient, setNewClient] = useState({
-     nom: "",
-     prenom: "",
-     email: "",
-     telephone: "",
-   });
-
-  useEffect(() => {
-    const difference = nombreVetements - vetements.length;
-    if (difference > 0) {
-      setVetements((prev) => [
-        ...prev,
-        ...Array(difference).fill({ categorie_id: "", type_id: "", couleur: "#000000" }),
-      ]);
-    } else if (difference < 0) {
-      setVetements((prev) => prev.slice(0, nombreVetements));
-    }
-  }, [nombreVetements]);
-
+  // Gestion des vêtements
   const handleVetementChange = (index, field, value) => {
-    const updatedVetements = vetements.map((vetement, i) =>
-      i === index ? { ...vetement, [field]: value } : vetement
-    );
+    const updatedVetements = [...vetements];
+    updatedVetements[index] = { ...updatedVetements[index], [field]: value };
     setVetements(updatedVetements);
   };
 
+  const addVetement = () => {
+    setVetements([...vetements, { 
+      categorie_id: "", 
+      type_id: "", 
+      couleur: "#000000",
+      quantite: 1 
+    }]);
+  };
+
+  const duplicateVetement = (index) => {
+    const vetementToDuplicate = vetements[index];
+    setVetements([...vetements, { ...vetementToDuplicate }]);
+  };
+
+  const removeVetement = (index) => {
+    if (vetements.length > 1) {
+      const updatedVetements = vetements.filter((_, i) => i !== index);
+      setVetements(updatedVetements);
+    }
+  };
+
+  // Soumission du formulaire
   const handleSave = (e) => {
     e.preventDefault();
+    
     if (!selectedClient) {
-      alert("Veuillez sélectionner un client.");
+      toast.error("Veuillez sélectionner un client");
       return;
     }
 
-    if (vetements.length === 0) {
-      alert("Veuillez ajouter au moins un vêtement.");
+    if (!selectedConsigne) {
+      toast.error("Veuillez sélectionner une consigne");
       return;
     }
-
 
     const data = {
       client_id: selectedClient.id,
       vetements: vetements,
       consigne_id: selectedConsigne,
-      kilogrammes: useKilogramme ? kilogrammes : null,  
-
+      kilogrammes: useKilogramme ? kilogrammes : null,
     };
 
-    console.log("Données envoyées :", data);
-
     router.post("/receptionniste/nouveau-lavage", data, {
-      onSuccess: (response) => {
-        console.log("✅ Réponse Laravel complète :", response);
-      },
+      onSuccess: () => toast.success("Lavage enregistré avec succès"),
       onError: (errors) => {
-        console.error("❌ Erreur lors de l'enregistrement :", errors);
-        alert("Erreur lors de l'enregistrement.");
-      },
-    });
-};
-
-  const handleAddClient = (e) => {
-    e.preventDefault();
-    router.post("/clients", newClient, {
-      onSuccess: () => {
-        setShowModal(false); // Fermer la fenêtre après succès
-        setNewClient({ nom: "", prenom: "", email: "", telephone: "" }); // Réinitialiser le formulaire
+        console.error(errors);
+        toast.error("Erreur lors de l'enregistrement");
       },
     });
   };
 
+  // Styles réutilisables
+  const inputStyle = "w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500";
+  const buttonStyle = "px-4 py-2 rounded text-white font-medium";
+  const cardStyle = "border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm";
 
-  // Étape 1 : Formulaire de lavage
   return (
     <LayoutReceptionniste>
-      
-        <div className="p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-blue-600 mb-4">Nouveau Lavage</h1>
-        <form className="space-y-4">
-          {/* Zone de recherche du client */}
-<div className="flex items-center gap-4">
-<div className="flex-grow">
-  <label className="block text-blue-600 font-medium mb-1">Nom du client</label>
-  <input
-    type="text"
-    className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-    value={nomClient}
-    onChange={(e) => handleClientChange(e)} // Appel à handleClientChange lors de la saisie
-    onBlur={() => setTimeout(() => setDropdownVisible(false), 200)} // Masque la liste avec un délai
-    onFocus={() => setDropdownVisible(true)} // Affiche la liste déroulante lorsque le champ est activé
-    placeholder="Rechercher un client..."
-  />
-  {isDropdownVisible && nomClient && (
-    <ul className="bg-white border border-blue-300 rounded mt-1 max-h-40 overflow-y-auto">
-      {clients
-        .filter((client) =>
-          client.nom.toLowerCase().includes(nomClient.toLowerCase())
-        )
-        .map((filteredClient) => (
-          <li
-            key={filteredClient.id}
-            className="px-4 py-2 hover:bg-blue-100 cursor-pointer"
-            onClick={() => handleClientSelect(filteredClient)} // Appel à handleClientSelect lors de la sélection
-          >
-            {filteredClient.nom} <br /> {filteredClient.email}
-          </li>
-        ))}
-    </ul>
-  )}
-</div>
-
-            <button
-              type="button"
-              onClick={() => setShowModal(true)}
-              className="mt-7 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 focus:ring-2 focus:ring-blue-300"
-            >
-              Ajouter Client
-            </button>
+      <div className="p-4 md:p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-xl md:text-2xl font-bold text-blue-600 mb-4">Nouveau Lavage</h1>
+        
+        <form onSubmit={handleSave} className="space-y-4">
+          {/* Recherche client */}
+          <div className="relative">
+            <label className="block text-blue-600 font-medium mb-1">Client</label>
+            <div className="flex flex-col md:flex-row gap-2">
+              <div className="flex-grow relative">
+                <input
+                  type="text"
+                  className={inputStyle}
+                  value={nomClient}
+                  onChange={handleClientChange}
+                  onBlur={() => setTimeout(() => setDropdownVisible(false), 200)}
+                  onFocus={() => nomClient && setDropdownVisible(true)}
+                  placeholder="Rechercher un client..."
+                />
+                {isDropdownVisible && filteredClients.length > 0 && (
+                  <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded mt-1 max-h-60 overflow-y-auto shadow-lg">
+                    {filteredClients.map((client) => (
+                      <li
+                        key={client.id}
+                        className="px-3 py-2 hover:bg-blue-50 cursor-pointer border-b border-gray-100 last:border-0"
+                        onClick={() => handleClientSelect(client)}
+                      >
+                        <div className="font-medium">{client.nom}</div>
+                        <div className="text-sm text-gray-600">{client.email}</div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowModal(true)}
+                className={`${buttonStyle} bg-blue-600 hover:bg-blue-700`}
+              >
+                {isMobile ? "+ Client" : "Ajouter Client"}
+              </button>
+            </div>
           </div>
+
+          {/* Consigne */}
           <div>
-            <label className="block text-blue-600 font-medium">Consigne de lavage</label>
-            <select className="w-full border px-4 py-2 rounded" value={selectedConsigne} onChange={(e) => setSelectedConsigne(e.target.value)}>
-              <option value="">-- Sélectionner une consigne --</option>
+            <label className="block text-blue-600 font-medium mb-1">Consigne de lavage</label>
+            <select 
+              className={inputStyle}
+              value={selectedConsigne} 
+              onChange={(e) => setSelectedConsigne(e.target.value)}
+              required
+            >
+              <option value="">-- Sélectionner --</option>
               {consignes.map((consigne) => (
-                <option key={consigne.id} value={consigne.id}>{consigne.nom}-{consigne.type_consigne}---{consigne.priorite_consigne}</option>
+                <option key={consigne.id} value={consigne.id}>
+                  {consigne.nom} - {consigne.type_consigne} (Priorité: {consigne.priorite_consigne})
+                </option>
               ))}
             </select>
           </div>
-           {/* Activer/Désactiver le kilogrammage */}
-           <div>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={useKilogramme} onChange={() => setUseKilogramme(!useKilogramme)} />
-              <span className="text-blue-600 font-medium">Facturer en kilogrammes</span>
+
+          {/* Kilogrammage */}
+          <div className={cardStyle}>
+            <label className="flex items-center gap-2 cursor-pointer mb-2">
+              <input 
+                type="checkbox" 
+                checked={useKilogramme} 
+                onChange={() => setUseKilogramme(!useKilogramme)} 
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-blue-600 font-medium">Facturer au kilogramme</span>
             </label>
             {useKilogramme && (
-              <input type="number" min="1" className="w-full border px-4 py-2 rounded mt-2" value={kilogrammes} onChange={(e) => setKilogrammes(e.target.value)} placeholder="Saisir le poids (kg)" />
+              <input 
+                type="number" 
+                min="1" 
+                step="0.1"
+                className={inputStyle} 
+                value={kilogrammes} 
+                onChange={(e) => setKilogrammes(e.target.value)} 
+                placeholder="Poids en kg" 
+                required
+              />
             )}
           </div>
 
-          {/* Nombre de vêtements */}
-          <div>
-            <label className="block text-blue-600 font-medium mb-1">Nombre de vêtements</label>
-            <input
-              type="number"
-              min="1"
-              className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              value={nombreVetements}
-              onChange={(e) => setNombreVetements(Number(e.target.value))}
-            />
+          {/* Liste des vêtements */}
+          <div className="space-y-4">
+            {vetements.map((vetement, index) => (
+              <div key={index} className={cardStyle}>
+                <div className="flex justify-between items-center mb-3">
+                  <h2 className="font-semibold text-blue-500">
+                    Vêtement {index + 1}
+                  </h2>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => duplicateVetement(index)}
+                      className="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded"
+                    >
+                      Dupliquer
+                    </button>
+                    {vetements.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeVetement(index)}
+                        className="text-xs bg-red-100 hover:bg-red-200 px-2 py-1 rounded text-red-600"
+                      >
+                        Supprimer
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Catégorie */}
+                <div className="mb-3">
+                  <label className="block text-blue-600 font-medium mb-1">Catégorie</label>
+                  <select
+                    className={inputStyle}
+                    value={vetement.categorie_id}
+                    onChange={(e) => handleVetementChange(index, "categorie_id", e.target.value)}
+                    required
+                  >
+                    <option value="">-- Sélectionner --</option>
+                    {categories.map((categorie) => (
+                      <option key={categorie.id} value={categorie.id}>
+                        {categorie.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Type */}
+                <div className="mb-3">
+                  <label className="block text-blue-600 font-medium mb-1">Type</label>
+                  <select
+                    className={inputStyle}
+                    value={vetement.type_id}
+                    onChange={(e) => handleVetementChange(index, "type_id", e.target.value)}
+                    required
+                  >
+                    <option value="">-- Sélectionner --</option>
+                    {types.map((type) => (
+                      <option key={type.id} value={type.id}>
+                        {type.nom}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Couleur */}
+                <div className="flex items-center gap-4 mb-3">
+                  <div>
+                    <label className="block text-blue-600 font-medium mb-1">Couleur</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="color"
+                        className="w-10 h-10 border border-gray-300 rounded cursor-pointer"
+                        value={vetement.couleur}
+                        onChange={(e) => handleVetementChange(index, "couleur", e.target.value)}
+                      />
+                      <span className="text-sm text-gray-600">
+                        {vetement.couleur}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+               
+              </div>
+            ))}
+
+            <button
+              type="button"
+              onClick={addVetement}
+              className={`${buttonStyle} bg-green-600 hover:bg-green-700 flex items-center justify-center gap-2`}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clipRule="evenodd" />
+              </svg>
+              Ajouter un vêtement
+            </button>
           </div>
 
-          {/* Liste des vêtements */}
-          {vetements.map((vetement, index) => (
-            <div key={index} className="border border-blue-300 rounded-lg p-4 space-y-4">
-              <h2 className="font-semibold text-blue-500">Vêtement {index + 1}</h2>
-
-              {/* Catégorie */}
-              <div>
-                <label className="block text-blue-600 font-medium mb-1">Catégorie</label>
-                <select
-                  className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={vetement.categorie_id}
-                  onChange={(e) => handleVetementChange(index, "categorie_id", e.target.value)}
-                >
-                  <option value="">-- Sélectionner --</option>
-                  {categories.map((categorie) => (
-                    <option key={categorie.id} value={categorie.id}>
-                      {categorie.nom}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Type */}
-              <div>
-                <label className="block text-blue-600 font-medium mb-1">Type</label>
-                <select
-                  type="text"
-                  className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={vetement.type_id}
-                  onChange={(e) => handleVetementChange(index, "type_id", e.target.value)}
-                 
-                >
-                <option value="">-- Sélectionner --</option>
-                  {types.map((type) => (
-                    <option key={type.id} value={type.id}>
-                      {type.nom}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Couleur */}
-              <div className="flex items-center gap-4">
-                <div>
-                  <label className="block text-blue-600 font-medium mb-1">Couleur</label>
-                  <input
-                    type="color"
-                    className="w-12 h-12 border border-blue-300 rounded"
-                    value={vetement.couleur}
-                    onChange={(e) => handleVetementChange(index, "couleur", e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
-
-          {/* Bouton Suivant */}
-          
-          <button   onClick={handleSave}
- 
-            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-400"
-            
+          {/* Bouton de soumission */}
+          <button
+            type="submit"
+            className={`${buttonStyle} bg-blue-600 hover:bg-blue-700 w-full py-3 text-lg`}
           >
-            Suivant
-          </button> 
-        
+            Enregistrer le lavage
+          </button>
         </form>
       </div>
 
-       {/* Fenêtre contextuelle */}
-       {showModal && (
-  <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center">
-    <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-      <h2 className="text-xl font-semibold text-blue-600 mb-4">Ajouter un Client</h2>
-      <form
-        onSubmit={(e) => {
-          e.preventDefault(); // Empêche le rechargement de la page
-          router.post("/clients", newClient, {
-            onSuccess: () => {
-              setShowModal(false); // Fermer la fenêtre si la requête est réussie
-              setNewClient({ nom: "", prenom: "", email: "", telephone: "" }); // Réinitialiser le formulaire
-            },
-            onError: (errors) => {
-              console.error(errors); // Affiche les erreurs éventuelles dans la console
-            },
-          });
-        }}
-        className="space-y-4"
-      >
-        {/* Champ Nom */}
-        <input
-          type="text"
-          placeholder="Nom"
-          value={newClient.nom}
-          onChange={(e) => setNewClient({ ...newClient, nom: e.target.value })}
-          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        {/* Champ Prénom */}
-        <input
-          type="text"
-          placeholder="Prénom"
-          value={newClient.prenom}
-          onChange={(e) => setNewClient({ ...newClient, prenom: e.target.value })}
-          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        {/* Champ Email */}
-        <input
-          type="email"
-          placeholder="Email"
-          value={newClient.email}
-          onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        {/* Champ Téléphone */}
-        <input
-          type="tel"
-          placeholder="Téléphone"
-          value={newClient.telephone}
-          onChange={(e) => setNewClient({ ...newClient, telephone: e.target.value })}
-          className="w-full border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-          required
-        />
-        {/* Boutons Valider et Annuler */}
-        <div className="flex items-center justify-end gap-4">
-          <button
-            type="button"
-            onClick={() => setShowModal(false)}
-            className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500 focus:outline-none focus:ring-2 focus:ring-gray-300"
-          >
-            Annuler
-          </button>
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
-          >
-            Valider
-          </button>
+      {/* Modale d'ajout de client */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
+            <div className="p-6">
+              <h2 className="text-xl font-semibold text-blue-600 mb-4">Nouveau Client</h2>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                router.post("/clients", newClient, {
+                  onSuccess: () => {
+                    setShowModal(false);
+                    setNewClient({ nom: "", prenom: "", email: "", telephone: "" });
+                    toast.success("Client ajouté avec succès");
+                  },
+                  onError: (errors) => {
+                    toast.error("Erreur lors de l'ajout du client");
+                    console.error(errors);
+                  },
+                });
+              }}>
+                <div className="space-y-4 mb-6">
+                  <input
+                    type="text"
+                    placeholder="Nom"
+                    className={inputStyle}
+                    value={newClient.nom}
+                    onChange={(e) => setNewClient({...newClient, nom: e.target.value})}
+                    required
+                  />
+                  <input
+                    type="text"
+                    placeholder="Prénom"
+                    className={inputStyle}
+                    value={newClient.prenom}
+                    onChange={(e) => setNewClient({...newClient, prenom: e.target.value})}
+                    required
+                  />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    className={inputStyle}
+                    value={newClient.email}
+                    onChange={(e) => setNewClient({...newClient, email: e.target.value})}
+                    required
+                  />
+                  <input
+                    type="tel"
+                    placeholder="Téléphone"
+                    className={inputStyle}
+                    value={newClient.telephone}
+                    onChange={(e) => setNewClient({...newClient, telephone: e.target.value})}
+                    required
+                  />
+                </div>
+                <div className="flex justify-end gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className={`${buttonStyle} bg-gray-500 hover:bg-gray-600`}
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className={`${buttonStyle} bg-blue-600 hover:bg-blue-700`}
+                  >
+                    Enregistrer
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-)}
-
+      )}
     </LayoutReceptionniste>
   );
 };
-
 
 export default NouveauLavage;

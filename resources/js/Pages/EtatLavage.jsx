@@ -1,82 +1,55 @@
-// Importation des modules nécessaires
-import React, { useState, useEffect } from "react"; // Gestion des états locaux
-import { Inertia } from "@inertiajs/inertia"; // Gestion des requêtes avec Inertia.js
-import { usePage } from "@inertiajs/react"; // Récupération des données injectées via Inertia
-import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste"; // Layout personnalisé pour les réceptionnistes
-// import Layout from "@/Layouts/Layout";
+import React, { useState, useEffect } from "react";
+import { Inertia } from "@inertiajs/inertia";
+import { usePage } from "@inertiajs/react";
+import LayoutReceptionniste from "@/Layouts/LayoutReceptionniste";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import { Html5QrcodeScanner } from "html5-qrcode"; // 📌 Importation du scanner QR
+import { Html5QrcodeScanner } from "html5-qrcode";
 
-
-/**
- * Fonction utilitaire : Détermine l'état d'un lavage en fonction des états des vêtements associés.
- * @param {Array} vetements - Liste des vêtements associés au lavage.
- * @returns {string} - "Retiré", "Prêt", ou "En cours".
- */
 const getEtatLavage = (vetements) => {
-  // Vérifie si tous les vêtements sont dans l'état "Retiré"
   const allRetired = vetements.every((vetement) => vetement.etat === "Retiré");
-  if (allRetired) {
-    return "Retiré"; // Retourne "Retiré" si tous les vêtements sont retirés
-  }
-  const allBegin = vetements.every((vetement) => vetement.etat ==="Initial");
-  if (allBegin) {
-    return "non Confirmé";
-  }
- 
-
-  // Vérifie si tous les vêtements sont dans l'état "Terminé"
+  if (allRetired) return "Retiré";
+  
+  const allBegin = vetements.every((vetement) => vetement.etat === "Initial");
+  if (allBegin) return "non Confirmé";
+  
   const allFinished = vetements.every((vetement) => vetement.etat === "Terminé");
-  return allFinished ? "Prêt" : "En cours"; // Retourne "Prêt" ou "En cours"
+  return allFinished ? "Prêt" : "En cours";
 };
 
-// Composant principal pour afficher l'état des lavages
-const EtatLavage = ({lavages}) => {
-  // Récupération des données injectées par Inertia (liste des lavages et autres informations)
-  const [lavageIdSelectionne, setLavageIdSelectionne] = useState(null); // Stocker l'ID du lavage sélectionné
-const [showModal, setShowModal] = useState(false); // Contrôle l'affichage de la modale
-const [showSuccessModal, setShowSuccessModal] = useState(false); // ✅ Nouvelle modale de succès
-const [codeRetrait, setCodeRetrait] = useState(""); // Stocke le code de retrait saisi
-const [message, setMessage] = useState(""); // Message de succès ou d'erreur
-const [mode, setMode] = useState("manual"); // ✅ Mode actuel (manuel ou QR)
-const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les infos du lavage validé
-
-
-
-  // État local pour la recherche (filtrer les lavages par ID)
+const EtatLavage = ({ lavages }) => {
+  const [lavageIdSelectionne, setLavageIdSelectionne] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [codeRetrait, setCodeRetrait] = useState("");
+  const [message, setMessage] = useState("");
+  const [mode, setMode] = useState("manual");
+  const [lavageDetails, setLavageDetails] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
-  /**
-   * Fonction de recherche : Met à jour le filtre basé sur l'ID du lavage.
-   * @param {Object} e - Événement de changement dans l'input.
-   */
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value); // Met à jour le terme de recherche
-  };
+  // Détection de la taille de l'écran
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
-  // Filtrer les lavages en fonction du terme recherché
   const filteredLavages = lavages.filter((lavage) =>
     lavage.id.toString().includes(searchTerm)
   );
 
-  /**
-   * Gestion du clic sur "Retirer" : Met à jour l'état du lavage et des vêtements associés.
-   * @param {number} lavageId - ID du lavage à retirer.
-   */
   const handleRetirer = async (lavageId) => {
     try {
       await Inertia.post(`/lavages/${lavageId}/retirer`, null, {
-         preserveState: true, // ✅ Empêche le reset de la page
-      preserveScroll: true, // ✅ Empêche de remonter en haut de la page
-        onSuccess: () => {
-          toast.success("Lavage retiré avec succès !");
-        },
-        onError: (errors) => {
-          console.error(errors);
-          toast.error("Une erreur s'est produite lors du retrait.");
-        },
+        preserveState: true,
+        preserveScroll: true,
+        onSuccess: () => toast.success("Lavage retiré avec succès !"),
+        onError: () => toast.error("Une erreur s'est produite lors du retrait."),
       });
     } catch (error) {
       console.error("Erreur lors de la mise à jour :", error);
@@ -85,15 +58,11 @@ const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les inf
 
   const handleFacture = (e, lavageId) => {
     e.stopPropagation();
-    
-        Inertia.visit(`/receptionniste/factures/${lavageId}`);
-      
-  
+    Inertia.visit(`/receptionniste/factures/${lavageId}`);
   };
 
   const verifierCodeRetrait = async (e) => {
-      e.preventDefault();
-
+    e.preventDefault();
     if (!lavageIdSelectionne || !codeRetrait) {
       toast.warn("Veuillez entrer un code de retrait.");
       return;
@@ -106,15 +75,10 @@ const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les inf
       });
 
       if (response.data.valid) {
-        
-        setLavageDetails(response.data.lavage); 
-        setShowSuccessModal(true); // ✅ Afficher la seconde modale
+        setLavageDetails(response.data.lavage);
+        setShowSuccessModal(true);
         toast.success("✅ Code correct !");
         setShowModal(false);
-      
-
-        // ✅ Mettre à jour les détails du lavage
-       
       } else {
         toast.error("❌ " + response.data.message);
       }
@@ -123,286 +87,280 @@ const [lavageDetails, setLavageDetails] = useState(null); // ✅ Stocker les inf
       toast.error("Erreur lors de la vérification.");
     }
   };
-  
-  const handleVerification = async () => {
-    if (!lavageIdSelectionne || !codeRetrait) {
-        toast.warn("Veuillez entrer un code de retrait.");
-        return;
-    }
 
-    try {
-        const response = await axios.post("http://127.0.0.1:8000/receptionniste/verifier-retrait", {
-            lavage_id: lavageIdSelectionne,
-            code_retrait: codeRetrait,
-        });
+  useEffect(() => {
+    if (mode === "qr" && showModal) {
+      const scanner = new Html5QrcodeScanner("reader", {
+        fps: 10,
+        qrbox: 250,
+      });
 
-        console.log("🔍 Réponse API :", response.data);
-
-        if (response.data.valid) {
-            toast.success("✅ Code correct !");
-            setShowModal(false);
-            handleRetirer(lavageIdSelectionne);
-        } else {
-            toast.error("❌ " + response.data.message);
+      scanner.render(
+        (decodedText) => {
+          setCodeRetrait(decodedText);
+          setMode("manual");
+        },
+        (errorMessage) => {
+          console.error("Erreur de scan :", errorMessage);
         }
-    } catch (error) {
-        console.error("🚨 Erreur API :", error);
-        toast.error("Erreur lors de la vérification.");
+      );
+
+      return () => scanner.clear();
     }
-};
+  }, [mode, showModal]);
 
- // ✅ Scanner QR Code avec html5-qrcode
- useEffect(() => {
-  if (mode === "qr" && showModal) {
-    const scanner = new Html5QrcodeScanner("reader", {
-      fps: 10,
-      qrbox: 250,
-    });
+  const handleEditer = (e, lavageId) => {
+    e.stopPropagation();
+    Inertia.visit(`/receptionniste/lavage/${lavageId}/edit`);
+  };
 
-    scanner.render(
-      (decodedText) => {
-        setCodeRetrait(decodedText); // ✅ Récupération du code scanné
-        setMode("manual"); // Retour en mode manuel après scan
-      },
-      (errorMessage) => {
-        console.error("Erreur de scan :", errorMessage);
-      }
-    );
-
-    return () => scanner.clear();
-  }
-}, [mode, showModal]);
-
-const handleEditer = (e, lavageId) => {
-  e.stopPropagation();
-  Inertia.visit(`/receptionniste/lavage/${lavageId}/edit`);
-};
-  
-  
-
-  // Affichage du composant
   return (
     <LayoutReceptionniste>
-      <div className="p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-2xl font-bold text-blue-600 mb-6">État des Lavages</h1>
+      <div className="p-4 bg-white rounded-lg shadow-md">
+        <h1 className="text-xl font-bold text-blue-600 mb-4">État des Lavages</h1>
 
         {/* Barre de recherche */}
-        <div className="mb-6">
-          <label htmlFor="search" className="block text-blue-600 font-medium mb-2">
-            Rechercher un lavage par Numero
-          </label>
+        <div className="mb-4">
           <input
             type="text"
-            id="search"
             value={searchTerm}
-            onChange={handleSearch}
-            placeholder="Entrez le N° du lavage..."
-            className="w-full border border-blue-300 rounded px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Rechercher par N°..."
+            className="w-full border border-blue-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
-        {/* Tableau des lavages */}
-        <table className="w-full text-left border-collapse border border-gray-300">
-          <thead>
-            <tr>
-              <th className="border px-4 py-2">N° Lavage</th>
-              <th className="border px-4 py-2">Nom Client</th>
-              <th className="border px-4 py-2">État</th>
-              <th className="border px-4 py-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {/* Itération sur les lavages filtrés */}
+        {/* Version mobile - Liste en cartes */}
+        {isMobile ? (
+          <div className="space-y-3">
             {filteredLavages.map((lavage) => {
-              const etat = getEtatLavage(lavage.vetements); // Détermine l'état du lavage
+              const etat = getEtatLavage(lavage.vetements);
               return (
-                <tr
-                  key={lavage.id}
-                  className="hover:bg-gray-100 cursor-pointer"
-                   onClick={() => Inertia.visit(`/lavages/${lavage.id}/details`)}// Redirection vers les détails
+                <div 
+                  key={lavage.id} 
+                  className="bg-white p-3 rounded-lg shadow border border-gray-200"
+                  onClick={() => Inertia.visit(`/lavages/${lavage.id}/details`)}
                 >
-                  <td 
-                  
-                  className="border px-4 py-2" > {lavage.id}
-                  </td>
-                  <td className="border px-4 py-2">{lavage.client.nom}</td>
-                  <td className="border px-4 py-2">{etat}</td>
-                  <td className="border px-4 py-2">
-                    {/* Bouton "Retirer" si l'état est "Prêt" */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-blue-600">N°{lavage.id}</h3>
+                      <p className="text-gray-700">{lavage.client.nom} {lavage.client.prenom} </p>
+                    </div>
+                    <span className={`px-2 py-1 rounded text-xs text-white ${
+                      etat === "Prêt" ? "bg-green-500" : 
+                      etat === "En cours" ? "bg-yellow-500" : 
+                      etat === "Retiré" ? "bg-gray-500" : "bg-orange-500"
+                    }`}>
+                      {etat}
+                    </span>
+                  </div>
+
+                  <div className="mt-3 flex justify-between">
                     {etat === "Prêt" && (
                       <button
                         onClick={(e) => {
-                          e.stopPropagation(); // Empêche l'exécution de l'événement parent (redirection)
-                          setLavageIdSelectionne(lavage.id); // Stocke l'ID du lavage cliqué
-                          setShowModal(true); // Met à jour l'état du lavage
+                          e.stopPropagation();
+                          setLavageIdSelectionne(lavage.id);
+                          setShowModal(true);
                         }}
-                        className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 focus:outline-none"
+                        className="bg-green-500 text-white px-3 py-1 rounded text-sm"
                       >
                         Retirer
                       </button>
-                      
                     )}
                     {etat === "non Confirmé" && (
-  <button
-    onClick={(e) => {
-      handleFacture(e, lavage.id);
-    }}
-    className="bg-orange-400 text-white px-4 py-2 rounded hover:bg-orange-500 focus:outline-none"
-  >
-    Imprimer Facture
-  </button>
-  
-)}
-                  {etat === "non Confirmé" && (
-  <button
-  onClick={(e) => {
-    handleEditer(e, lavage.id);
-  }
-  }
-  className="ml-10 bg-blue-400 text-white px-4 py-2 rounded hover:bg-blue-500 focus:outline-none"
->
-  Éditer
-</button>
-
-)}
-
-                  </td>
-                </tr>
+                      <>
+                        <button
+                          onClick={(e) => handleFacture(e, lavage.id)}
+                          className="bg-orange-400 text-white px-3 py-1 rounded text-sm"
+                        >
+                          Facture
+                        </button>
+                        <button
+                          onClick={(e) => handleEditer(e, lavage.id)}
+                          className="bg-blue-400 text-white px-3 py-1 rounded text-sm ml-2"
+                        >
+                          Éditer
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
               );
             })}
-          </tbody>
-        </table>
-      </div>
-       {/* Fenêtre Modale de Vérification */}
-       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-semibold text-blue-600 mb-4">Vérification du Code</h2>
+          </div>
+        ) : (
+          /* Version desktop - Tableau */
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-gray-100">
+                <tr>
+                  <th className="p-3">N° Lavage</th>
+                  <th className="p-3">Client</th>
+                  <th className="p-3">État</th>
+                  <th className="p-3">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredLavages.map((lavage) => {
+                  const etat = getEtatLavage(lavage.vetements);
+                  return (
+                    <tr 
+                      key={lavage.id} 
+                      className="hover:bg-gray-50 border-t cursor-pointer"
+                      onClick={() => Inertia.visit(`/lavages/${lavage.id}/details`)}
+                    >
+                      <td className="p-3">{lavage.id}</td>
+                      <td className="p-3">{lavage.client.nom}  {lavage.client.prenom}</td>
+                      <td className="p-3">
+                        <span className={`px-2 py-1 rounded text-xs text-white ${
+                          etat === "Prêt" ? "bg-green-500" : 
+                          etat === "En cours" ? "bg-yellow-500" : 
+                          etat === "Retiré" ? "bg-gray-500" : "bg-orange-500"
+                        }`}>
+                          {etat}
+                        </span>
+                      </td>
+                      <td className="p-3">
+                        {etat === "Prêt" && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setLavageIdSelectionne(lavage.id);
+                              setShowModal(true);
+                            }}
+                            className="bg-green-500 text-white px-3 py-1 rounded text-sm"
+                          >
+                            Retirer
+                          </button>
+                        )}
+                        {etat === "non Confirmé" && (
+                          <>
+                            <button
+                              onClick={(e) => handleFacture(e, lavage.id)}
+                              className="bg-orange-400 text-white px-3 py-1 rounded text-sm"
+                            >
+                              Facture
+                            </button>
+                            <button
+                              onClick={(e) => handleEditer(e, lavage.id)}
+                              className="bg-blue-400 text-white px-3 py-1 rounded text-sm ml-2"
+                            >
+                              Éditer
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
 
-            {/* ✅ Choix entre saisie manuelle ou scan QR */}
-            <div className="flex justify-center mb-3">
-              <button
-                onClick={() => setMode("manual")}
-                className={`px-4 py-2 rounded-l ${
-                  mode === "manual" ? "bg-blue-600 text-white" : "bg-gray-200"
-                }`}
-              >
-                Saisie manuelle
-              </button>
-              <button
-                onClick={() => setMode("qr")}
-                className={`px-4 py-2 rounded-r ${
-                  mode === "qr" ? "bg-blue-600 text-white" : "bg-gray-200"
-                }`}
-              >
-                Scan QR
-              </button>
+        {/* Modale de vérification */}
+        {showModal && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 p-4">
+            <div className="bg-white p-4 rounded-lg shadow-lg w-full max-w-sm">
+              <h2 className="text-lg font-semibold text-blue-600 mb-3">Vérification du Code</h2>
+
+              <div className="flex justify-center mb-3">
+                <button
+                  onClick={() => setMode("manual")}
+                  className={`px-3 py-1 rounded-l text-sm ${
+                    mode === "manual" ? "bg-blue-600 text-white" : "bg-gray-200"
+                  }`}
+                >
+                  Saisie manuelle
+                </button>
+                <button
+                  onClick={() => setMode("qr")}
+                  className={`px-3 py-1 rounded-r text-sm ${
+                    mode === "qr" ? "bg-blue-600 text-white" : "bg-gray-200"
+                  }`}
+                >
+                  Scan QR
+                </button>
+              </div>
+
+              {mode === "manual" && (
+                <input
+                  type="text"
+                  value={codeRetrait}
+                  onChange={(e) => setCodeRetrait(e.target.value)}
+                  className="w-full border px-3 py-2 rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                  placeholder="Entrez le code de retrait"
+                />
+              )}
+
+              {mode === "qr" && (
+                <div id="reader" className="w-full flex justify-center mt-2"></div>
+              )}
+
+              <div className="flex justify-end mt-4 space-x-2">
+                <button
+                  onClick={() => {
+                    setShowModal(false);
+                    setCodeRetrait("");
+                    setMessage("");
+                  }}
+                  className="px-3 py-1 bg-gray-400 text-white rounded text-sm"
+                >
+                  Annuler
+                </button>
+                <button
+                  onClick={verifierCodeRetrait}
+                  className="px-3 py-1 bg-blue-600 text-white rounded text-sm"
+                >
+                  Confirmer
+                </button>
+              </div>
             </div>
+          </div>
+        )}
 
-            {/* ✅ Mode Saisie Manuelle */}
-            {mode === "manual" && (
-              <input
-                type="text"
-                value={codeRetrait}
-                onChange={(e) => setCodeRetrait(e.target.value)}
-                className="w-full border px-4 py-2 rounded mt-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            )}
+        {/* Modale de succès */}
+        {showSuccessModal && lavageDetails && (
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50 p-4">
+            <div className="bg-white p-4 rounded-lg shadow-xl w-full max-w-sm">
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 bg-green-500 text-white rounded-full flex items-center justify-center text-xl mb-2">
+                  ✓
+                </div>
+                <h2 className="text-lg font-bold text-green-600">Retrait Confirmé</h2>
+              </div>
 
-            {/* ✅ Mode Scan QR */}
-            {mode === "qr" && (
-              <div id="reader" className="w-full flex justify-center mt-4"></div>
-            )}
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex">
+                  <span className="font-medium w-24">N° Lavage:</span>
+                  <span>{lavageDetails.id}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-medium w-24">Client:</span>
+                  <span>{lavageDetails.client.nom}</span>
+                </div>
+                <div className="bg-blue-50 p-2 rounded mt-2">
+                  <span className="font-medium">Emplacement:</span>
+                  <p className="text-blue-700">{lavageDetails.emplacement.nom}</p>
+                </div>
+              </div>
 
-            {message && <p className="text-red-500 mt-2">{message}</p>}
-
-            <div className="flex justify-end mt-4">
               <button
                 onClick={() => {
-                  setShowModal(false);
-                  setCodeRetrait("");
-                  setMessage("");
+                  setShowSuccessModal(false);
+                  handleRetirer(lavageIdSelectionne);
                 }}
-                className="px-4 py-2 bg-gray-400 text-white rounded hover:bg-gray-500"
+                className="w-full mt-4 px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700 text-sm"
               >
-                Annuler
-              </button>
-
-              <button
-                onClick={verifierCodeRetrait}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 ml-2"
-              >
-                Confirmer
+                Fermer
               </button>
             </div>
           </div>
-        </div>
-      )}
-
-     {/* ✅ Seconde Modale : Détails du Lavage */}
-{showSuccessModal && lavageDetails && (
-  <div className="fixed inset-0 flex items-center justify-center bg-gray-900 bg-opacity-50">
-    <div className="bg-white p-6 rounded-lg shadow-xl w-full max-w-md transform transition-all">
-      {/* ✅ En-tête de succès */}
-      <div className="flex flex-col items-center">
-        <div className="w-16 h-16 bg-green-500 text-white rounded-full flex items-center justify-center text-3xl">
-          ✅
-        </div>
-        <h2 className="text-2xl font-bold text-green-600 mt-4">
-          Retrait Confirmé !
-        </h2>
-        <p className="text-gray-600 text-center">
-          Le retrait du lavage a été validé avec succès.
-        </p>
+        )}
       </div>
-
-      {/* ✅ Détails du lavage */}
-      <div className="mt-6 border-t border-gray-300 pt-4 space-y-4">
-        {/* ID Lavage */}
-        <div className="flex items-center">
-          <span className="text-blue-600 text-xl mr-2">🆔</span>
-          <p className="text-lg">
-            <strong>ID Lavage :</strong> {lavageDetails.id}
-          </p>
-        </div>
-
-        {/* Nom Client */}
-        <div className="flex items-center">
-          <span className="text-blue-600 text-xl mr-2">👤</span>
-          <p className="text-lg">
-            <strong>Client :</strong> {lavageDetails.client.nom} {lavageDetails.client.prenom}
-          </p>
-        </div>
-
-        {/* Emplacement mis en avant */}
-        <div className="flex items-center bg-blue-100 p-3 rounded-lg shadow-md">
-          <span className="text-blue-700 text-2xl mr-3">📍</span>
-          <p className="text-lg text-blue-700 font-semibold">
-            Emplacement : {lavageDetails.emplacement.nom}
-          </p>
-        </div>
-      </div>
-
-      {/* ✅ Bouton de fermeture */}
-      <div className="mt-6 flex justify-center">
-        <button
-          onClick={() => {
-            setShowSuccessModal(false); // Fermer la modale
-            handleRetirer(lavageIdSelectionne); // ✅ Exécuter le retrait après la fermeture
-          }}
-          className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
-        >
-          Fermer
-        </button>
-      </div>
-    </div>
-  </div>
-)}
-
     </LayoutReceptionniste>
   );
 };
-// EtatLavage.layout = (page) => <Layout children={page} />;
-
 
 export default EtatLavage;
