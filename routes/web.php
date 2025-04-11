@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminDashboardController;
+use App\Http\Controllers\DashboardLaveurController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -24,6 +25,8 @@ use App\Http\Controllers\EmplacementController;
 use App\Http\Controllers\TypeController;
 use App\Http\Controllers\KilogrammesController;
 use App\Http\Controllers\ConsigneController;
+use App\Http\Controllers\DashboardReceptionnisteController;
+use App\Http\Controllers\DashboardRepasseurController;
 use App\Http\Middleware\ProtectMiddleware;
 use App\Http\Controllers\StructureDashboardController;
 use App\Http\Controllers\SuperDashboardController;
@@ -44,22 +47,17 @@ Route::post('/', [AuthController::class, 'login']);
 
 
     
-Route::get('/Laveur', function () {
-    return Inertia::render('DashboardLaveur');
-})->name('laveur');
+Route::get('/Laveur', [DashboardLaveurController::class, 'index'])->name('laveur');
 Route::get('/Laveur/Taches', [VetementController::class,'indexLavage']);
 
 
 
-Route::get('/Repasseur', function () {
-    return Inertia::render('DashboardRepasseur');
-})->name('repasseur');
+Route::get('/Repasseur', [DashboardRepasseurController::class,'index'])->name('repasseur');
 
 Route::get('/repasseur/taches', [VetementController::class,'indexRepassage']);
-
-Route::get('/Receptionniste', function () {
-    return Inertia::render('DashboardReceptionniste');
-})->name('Receptionniste');
+Route::middleware(['auth:web'])->group(function () {
+Route::get('/Receptionniste',[DashboardReceptionnisteController::class, 'index'])->name('Receptionniste');
+});
 
 Route::get('/Inscription', function () {
     return Inertia::render('Register');
@@ -124,9 +122,9 @@ Route::get('/structure/dashboard', [StructureDashboardController::class, 'index'
 Route::get('receptionniste/nouveau-lavage', [NouveauLavageController::class, 'nouveauLavage']); // Assure que seul un acteur connecté peut accéder à la page
 Route::get('lavages/termines', [LavageController::class, 'getLavagesTermines']); // Assure que seul un acteur connecté peut accéder à la page
 Route::post('/receptionniste/nouveau-lavage',[NouveauLavageController::class, 'store']);
-Route::get('/receptionniste/acceuil', function(){
-    return Inertia::render('DashboardReceptionniste');
-});
+// Route::get('/receptionniste/acceuil', function(){
+//     return Inertia::render('DashboardReceptionniste');
+// });
 // });
 
 
@@ -330,4 +328,20 @@ use App\Http\Controllers\SuperAdmin\AbonnementController;
 
 Route::post('/update-etat-vetements', [VetementController::class, 'updateEtiquete']);
 Route::delete('/lavages/{id}', [LavageController::class, 'destroy']);
+
+
+use App\Http\Controllers\Auth\PasswordResetController;
+
+Route::prefix('reset-password')->group(function () {
+    Route::get('/request', [PasswordResetController::class, 'showRequestForm'])->name('password.request');
+    Route::post('/send-otp', [PasswordResetController::class, 'sendOtp'])->name('password.sendOtp');
+    
+    // Ajouter le paramètre telephone optionnel
+    Route::get('/verify', [PasswordResetController::class, 'showVerifyForm'])
+        ->name('password.verify')
+        ->defaults('telephone', null);
+        
+    Route::post('/verify-otp', [PasswordResetController::class, 'verifyOtp'])->name('password.verifyOtp');
+    Route::post('/reset', [PasswordResetController::class, 'resetPassword'])->name('password.reset');
+});
 

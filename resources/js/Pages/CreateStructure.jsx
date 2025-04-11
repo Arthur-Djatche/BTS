@@ -18,7 +18,9 @@ const CreateStructure = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     post("/structures", {
-      onSuccess: () => alert("Structure créée avec succès !"),
+      onSuccess: () => {
+        Inertia.visit("/structures/login");
+      },
       onError: (errors) => console.error(errors),
     });
   };

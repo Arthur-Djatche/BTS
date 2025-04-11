@@ -78,10 +78,10 @@ function handleSubmit (e) {
        
                  {/* Lien vers l'inscription */}
                  <p className="text-center text-gray-600 mt-4">
-                   Pas encore de compte ?{" "}
-                   <a href="/structures" className="text-blue-600 hover:underline">
-                     Créer une structure
-                   </a>
+                   Pas encore de compte ? Contactez une Structure{" "} <br/>
+                   <a href="/reset-password/request" className="text-blue-600 hover:underline">
+              Mot de passe oublié ? Réinitialise
+            </a>
                  </p>
                </form>
              </motion.div>

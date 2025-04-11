@@ -60,7 +60,7 @@ function LayoutAdmin({ children }) {
 
         {/* ✅ Navigation */}
         <nav className="space-y-4 flex-1">
-          <Link href="/Admin/acceuil" className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-500">
+          <Link href="/structure/dashboard" className="flex items-center gap-3 p-3 rounded-lg hover:bg-blue-500">
             <FaHome size={20} /> ACCUEIL
           </Link>
 

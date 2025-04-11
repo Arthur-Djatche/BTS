@@ -13,7 +13,9 @@ const LoginStructure = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     post("/structures/login", {
-      onSuccess: () => alert("Connexion réussie !"),
+      onSuccess: () => {
+        Inertia.visit("/structure/dashboard");
+      },
       onError: (errors) => console.error(errors),
     });
   };
@@ -72,6 +74,9 @@ const LoginStructure = () => {
             Pas encore de compte ?{" "}
             <a href="/structures" className="text-blue-600 hover:underline">
               Créer une structure
+            </a> <br></br>
+            <a href="/reset-password/request" className="text-blue-600 hover:underline">
+              Mot de passe oublié ? Réinitialise
             </a>
           </p>
         </form>

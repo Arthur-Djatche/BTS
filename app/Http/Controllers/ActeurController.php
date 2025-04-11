@@ -172,19 +172,6 @@ public function index()
     ]);
 }
 
-public function indexx(Request $request)
-{
-    $search = $request->input('search');
-    $acteurs = Acteur::query()
-        ->when($search, fn($query) => 
-            $query->where('nom', 'like', "%{$search}%")
-                  ->orWhere('prenom', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%"))
-        ->get();
-
-    return inertia('Admin/Emp/ListActeur', ['acteurs' => $acteurs]);
-}
-
 
 public function destroy($id)
 {
@@ -200,36 +187,80 @@ public function update(Request $request)
 
     // Récupérer l'utilisateur connecté
     $acteur = Auth::guard('web')->user();
-    Log::info("Type de l'objet acteur :", ['type' => get_class($acteur)]);
 
     if (!$acteur) {
         Log::error("Aucun acteur trouvé !");
         return redirect()->route('acteurs.login')->with('error', "Vous devez être connecté.");
     }
 
-    // Validation des données
-    $validated = $request->validate([
+    // Règles de validation de base
+    $validationRules = [
         'nom' => 'nullable|string|max:255',
         'prenom' => 'nullable|string|max:255',
-        'password' => 'nullable|string|min:8',
-    ]);
+        'telephone' => 'nullable|string|max:20',
+        'email' => 'nullable|email|unique:acteurs,email,'.$acteur->id,
+    ];
 
-    // Mise à jour des champs
+    // Ajout des règles pour le changement de mot de passe si nécessaire
+    if ($request->filled('current_password') || $request->filled('new_password')) {
+        $validationRules = array_merge($validationRules, [
+            'current_password' => [
+                'required',
+                'string',
+                'min:8',
+                function ($attribute, $value, $fail) use ($acteur) {
+                    if (!Hash::check($value, $acteur->password)) {
+                        $fail('Le mot de passe actuel est incorrect.');
+                    }
+                }
+            ],
+            'new_password' => 'required|string|min:8|different:current_password',
+        ]);
+    }
+
+    // Validation des données
+    $validated = $request->validate($validationRules);
+
+    // Mise à jour des champs de base
     $acteur->nom = $validated['nom'] ?? $acteur->nom;
     $acteur->prenom = $validated['prenom'] ?? $acteur->prenom;
+    $acteur->telephone = $validated['telephone'] ?? $acteur->telephone;
+    $acteur->email = $validated['email'] ?? $acteur->email;
 
-    if (!empty($validated['password'])) {
-        $acteur->password = Hash::make($validated['password']);
+    // Mise à jour du mot de passe si fourni
+    if (!empty($validated['new_password'])) {
+        $acteur->password = Hash::make($validated['new_password']);
     }
+
     /** @var \App\Models\Acteur $acteur */
-    $acteur->save(); // ✅ Sauvegarde
+    $acteur->save();
 
     Log::info('Données mises à jour avec succès !', ['acteur' => $acteur]);
 
-    return Inertia::render('ProfilActeur', [
-        'acteur' => $acteur,
-        'success' => "Profil mis à jour avec succès !",
-    ]);
+    switch ($acteur->role) {
+        case 'super_admin':
+            return Inertia::render('DashboardSuper', [
+                'acteur' => $acteur,
+                'success' => "Profil mis à jour avec succès !",
+            ]);
+        case 'repasseur':
+            return Inertia::render('DashboardRepasseur', [
+                'acteur' => $acteur,
+                'success' => "Profil mis à jour avec succès !",
+            ]);
+        case 'receptionniste':
+            return Inertia::render('DashboardReceptionniste', [
+                'acteur' => $acteur,
+                'success' => "Profil mis à jour avec succès !",
+            ]);
+        case 'laveur':
+            return Inertia::render('DashboardLaveur', [
+                'acteur' => $acteur,
+                'success' => "Profil mis à jour avec succès !",
+            ]);
+    }
+
+   
 }
 public function edit()
 {

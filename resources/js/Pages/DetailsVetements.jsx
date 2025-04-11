@@ -75,7 +75,7 @@ const DetailsVetements = () => {
           <th className="p-3">Type</th>
           <th className="p-3">Couleur</th>
           <th className="p-3">État</th>
-          <th className="p-3">Actions</th>
+          {/* <th className="p-3">Actions</th> */}
         </tr>
       </thead>
       <tbody>
@@ -101,7 +101,7 @@ const DetailsVetements = () => {
                 {vetement.etat}
               </span>
             </td>
-            <td className="p-3">
+            {/* <td className="p-3">
               {vetement.etat === "Terminé" && (
                 <button
                   onClick={() => handleRetirerVetement(vetement.id)}
@@ -110,7 +110,7 @@ const DetailsVetements = () => {
                   Retirer
                 </button>
               )}
-            </td>
+            </td> */}
           </tr>
         ))}
       </tbody>

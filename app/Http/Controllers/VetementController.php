@@ -263,7 +263,7 @@ public function indexRepassage()
         ->get();
 
     return inertia('TacheRepassage', [
-        'vetements' => $vetementsNormaux,
+        'vetements' => $vetementsNormaux->load(['lavage.consigne']),
         'emplacements' => Emplacement::where('structure_id', $structureId)->get(),
         'lavagesTermines' => Lavage::whereDoesntHave('vetements', function ($query) {
                 $query->where('etat', '!=', 'Terminé');

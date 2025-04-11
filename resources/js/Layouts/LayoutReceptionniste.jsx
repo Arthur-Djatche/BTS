@@ -43,7 +43,7 @@ function LayoutReceptionniste({ children }) {
         {/* ✅ Liens de Navigation */}
         <nav className="flex flex-col gap-2 flex-grow">
           <Link
-            href="/receptionniste/acceuil"
+            href="/Receptionniste"
             className={`flex items-center gap-3 px-4 py-3 rounded-md ${
               url === "/receptionniste/acceuil" ? "bg-blue-500" : "hover:bg-blue-500"
             }`}
@@ -101,7 +101,7 @@ function LayoutReceptionniste({ children }) {
               <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center text-blue-600 font-bold">
                 B
               </div>
-              <h1 className="text-xl font-semibold tracking-wide">BNR CLEAN</h1>
+              <h1 className="text-xl font-semibold tracking-wide">CLEAN MANAGER </h1>
             </div>
 
             {/* ✅ Icône utilisateur avec menu */}

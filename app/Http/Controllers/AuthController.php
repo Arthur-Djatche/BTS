@@ -49,7 +49,7 @@ public function showActeursLogin()
             case 'super_admin':
                 return redirect()->route('Super'); ;
             case 'repasseur':
-                return redirect()->route('Admin'); // Route pour admin
+                return redirect()->route('repasseur'); // Route pour admin
             case 'receptionniste':
                 return redirect()->route('Receptionniste'); // Route pour user
             case 'laveur':

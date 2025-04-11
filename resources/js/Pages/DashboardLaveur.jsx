@@ -1,56 +1,56 @@
 import React from "react";
 import LayoutLaveur from "@/Layouts/LayoutLaveur";
+import { Bar } from "react-chartjs-2";
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+} from "chart.js";
 
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
-function DashboardLaveur() {
+export default function DashboardLaveur({ en_lavage, laves, stats_journalieres }) {
+  const labels = stats_journalieres.map(entry => entry.date);
+  const data = stats_journalieres.map(entry => entry.total);
+
+  const barData = {
+    labels,
+    datasets: [
+      {
+        label: "Vêtements lavés par jour",
+        data,
+        backgroundColor: "#3b82f6",
+      }
+    ]
+  };
+
   return (
     <LayoutLaveur>
-      
-      {/* Titre principal de la page */}
-      <h1 className="text-2xl font-bold text-blue-600">Dashboard Réceptionniste</h1>
-      <p className="mt-2 text-gray-600">
-        Bienvenue ! Consultez un aperçu des lavages en cours ou accédez rapidement aux fonctionnalités principales.
-      </p>
+      <h1 className="text-2xl font-bold text-blue-600 mb-4">Tableau de Bord du Laveur</h1>
 
-      {/* Statistiques rapides */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Carte 1 : Lavages en cours */}
-        <div className="bg-white rounded shadow-md p-6 text-center">
-          <h2 className="text-lg font-semibold text-gray-700">Lavages en cours</h2>
-          <p className="text-3xl font-bold text-blue-600 mt-4">15</p>
+      <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow text-center">
+          <h2 className="text-lg font-semibold text-gray-700">En cours de lavage</h2>
+          <p className="text-3xl font-bold text-blue-600 mt-4">{en_lavage}</p>
         </div>
-
-        {/* Carte 2 : Lavages terminés */}
-        <div className="bg-white rounded shadow-md p-6 text-center">
-          <h2 className="text-lg font-semibold text-gray-700">Lavages terminés</h2>
-          <p className="text-3xl font-bold text-green-600 mt-4">30</p>
+        <div className="bg-white p-6 rounded-lg shadow text-center">
+          <h2 className="text-lg font-semibold text-gray-700">Déjà lavés</h2>
+          <p className="text-3xl font-bold text-green-600 mt-4">{laves}</p>
         </div>
-
-        {/* Carte 3 : Nouveaux clients */}
-        <div className="bg-white rounded shadow-md p-6 text-center">
-          <h2 className="text-lg font-semibold text-gray-700">Nouveaux clients</h2>
-          <p className="text-3xl font-bold text-blue-600 mt-4">5</p>
+        <div className="bg-white p-6 rounded-lg shadow text-center">
+          <h2 className="text-lg font-semibold text-gray-700">Total des 7 derniers jours</h2>
+          <p className="text-3xl font-bold text-purple-600 mt-4">{data.reduce((a, b) => a + b, 0)}</p>
         </div>
       </div>
 
-      {/* Actions rapides */}
-      <div className="mt-8">
-        <h2 className="text-xl font-bold text-gray-700">Actions rapides</h2>
-        <div className="mt-4 flex flex-wrap gap-4">
-          {/* Bouton "Nouveau Lavage" */}
-          <a
-            href="/Laveur/Taches"
-            className="px-6 py-3 bg-blue-600 text-white font-semibold rounded shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            Liste des taches
-          </a>
-
-        
-        </div>
+      <div className="bg-white p-6 rounded-lg shadow">
+        <h2 className="text-lg font-semibold text-gray-700 mb-4">Statistiques des Lavages (7 derniers jours)</h2>
+        <Bar data={barData} />
       </div>
     </LayoutLaveur>
   );
 }
-
-
-export default DashboardLaveur;
